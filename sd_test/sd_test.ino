@@ -28,7 +28,7 @@ void loop(){
   data.print(analogRead(A0));
   data.println();
   data.close();
-  Sleepy::loseSomeTime(5000);
+  Sleepy::loseSomeTime(5000-millis()%1000); //corrects for sensor detection time.
   
   
 }
