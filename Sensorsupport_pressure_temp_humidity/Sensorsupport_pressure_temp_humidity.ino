@@ -6,19 +6,26 @@
 #include <RTClib.h> //Available from https://github.com/adafruit/RTClib
 
 Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
-#define DHTPIN 2     // what pin the DHT is connected to
-#define DHTTYPE DHT11   
+#define DHTPIN 3    // what pin the DHT is connected to
+#define DHTTYPE DHT11 
 DHT dht(DHTPIN, DHTTYPE);
-int photo_pin = A0; //currently testing with photoresistor,connected to A0 and 5V, with 10kohm pulldown
+int photo_pin = A0; //currently testing with photoresistor,connected to A0 and 5V, with 1kohm pulldown
 File data; //initializes "data" as a file name
 ISR(WDT_vect) { Sleepy::watchdogEvent();} //sets up watchdog, allows microcontroller sleep routine 
 RTC_DS1307 RTC;
 
+//pins defined below are switches for unit conversions
+int temp_pin=0 ;//C to F
+int alt_pin=1 ;//meters to feet
+int time_pin=2 ;//1 min intervals and 30 min intervals
+
 
 void setup(){
   SD.begin(10); //This is the chipselect pin, change based on SD shield documentation.
-  data = SD.open("data.csv", FILE_WRITE);
-  data.print("Time");
+   
+  if(SD.exists("data.csv") == false){  //only creates header if file doesn't exist
+   data=SD.open("data.csv", FILE_WRITE);
+   data.print("Time");
   data.print(",");
   data.print("Temperature");
   data.print(",");
@@ -30,6 +37,9 @@ void setup(){
   data.print(",");
   data.print("sensor value");
   data.println();
+ }else{
+   data=SD.open("data.csv", FILE_WRITE);
+ }
   data.close();
   baro.begin();
   dht.begin();
@@ -41,7 +51,13 @@ void setup(){
 void loop(){
   DateTime now = RTC.now();
   float pascals=baro.getPressure();
-  float atm=pascals/101325; 
+  float inHg=pascals/3386.389; 
+  float degC=baro.getTemperature();
+  float degF=degC*9/5+32;
+  float altM=baro.getAltitude();
+  float altFt=altM*3.28;
+  
+  
   data=SD.open("data.csv", FILE_WRITE);
    //timestamp from rtc
   data.print(now.year(), DEC);
@@ -57,18 +73,28 @@ void loop(){
   data.print(now.second(), DEC);
  
   data.print(",");
-  data.print(baro.getTemperature());
+  if(digitalRead(temp_pin)==HIGH){
+    data.print(degC);
+  }else{
+    data.print(degF);
+  }
   data.print(",");
-  data.print(dht.readHumidity());
+  data.print(dht.readHumidity()); //DHT uses "read" rather than "get." readTemperature is also available, but less accurate than other sensor
   data.print(",");
-  data.print(atm);
+  data.print(inHg);
   data.print(",");
-  data.print(baro.getAltitude());
+  if(digitalRead(alt_pin)==HIGH){
+    data.print(altM);
+  }else{
+    data.print(altFt);
+  }
   data.print(",");
   data.print(analogRead(A0));
   data.println();
   data.close();
-  Sleepy::loseSomeTime(1000-millis()%1000);
-  
-  
+  if(digitalRead(time_pin)==HIGH){
+    Sleepy::loseSomeTime(1800000-millis()%1000); //set to collect data every 30 minutes
+  }else{
+    Sleepy::loseSomeTime(60000-millis()%1000); //set to collect data every minute
+  }
 }
