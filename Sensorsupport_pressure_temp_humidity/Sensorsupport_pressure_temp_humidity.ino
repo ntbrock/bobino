@@ -8,18 +8,19 @@ To Do:
   - Set RTC based on date/time values expressed in sd card, create specific format
 ************************************************************/
 #include <Wire.h>
-#include <Adafruit_MPL3115A2.h> //Temperature/pressure sensor support. Available at https://github.com/adafruit/Adafruit_MPL3115A2_Library
+#include <MPL3115A2.h> //Temperature/pressure sensor support. Available at https://github.com/sparkfun/MPL3115A2_Breakout
 #include <Narcoleptic.h> //microcontroller sleep library
 #include <SD.h>
 #include <DHT.h> //This library supports DHTxx sensors, in this case DHT11 temp/ humidity. Available from https://github.com/adafruit/DHT-sensor-library
 #include <RTClib.h> //Available from https://github.com/adafruit/RTClib
 
-Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
 #define DHTPIN 3    // what pin the DHT is connected to
 #define DHTTYPE DHT11 
 DHT dht(DHTPIN, DHTTYPE);
 int photo_pin = A0; //currently testing with photoresistor,connected to A0 and 5V, with 1kohm pulldown
 File data; //initializes "data" as a file name
+
+MPL3115A2 baro;
 
 RTC_DS1307 RTC;
 
@@ -35,10 +36,14 @@ void setup(){
   createHeader();
    
   data.close();
-  baro.begin();
   dht.begin();
   Wire.begin();
   RTC.begin();
+  baro.begin();
+  baro.setModeBarometer();
+  baro.setModeAltimeter();
+  baro.setOversampleRate(7);
+  baro.enableEventFlags();
   
   pinMode(temp_pin, INPUT);
   pinMode(alt_pin, INPUT);
@@ -46,30 +51,29 @@ void setup(){
 }
 
 void loop(){
-  float pascals=baro.getPressure();
+  float pascals=baro.readPressure();
   float inHg=pascals/3386.389; 
-  float degC=baro.getTemperature();
-  float degF=degC*9/5+32;
-  float altM=baro.getAltitude();
-  float altFt=altM*3.28;
+  float degC=baro.readTemp();
+  float degF=baro.readTempF();
   
   data=SD.open("data.csv", FILE_WRITE);
    timestamp();
   data.print(",");
-  if(digitalRead(temp_pin)==HIGH){
+if(digitalRead(temp_pin)==HIGH){
     data.print(degC);
   }else{
     data.print(degF);
   }
+  
   data.print(",");
   data.print(dht.readHumidity()); //DHT uses "read" rather than "get." readTemperature is also available, but less accurate than other sensor
   data.print(",");
-  data.print(pascals);
+  data.print(inHg);
   data.print(",");
   if(digitalRead(alt_pin)==HIGH){
-    data.print(altM);
+    data.print(baro.readAltitude());
   }else{
-    data.print(altFt);
+    data.print(baro.readAltitudeFt());
   }
   data.print(",");
   data.print(analogRead(photo_pin));
@@ -138,6 +142,8 @@ void sleep(){
   if(digitalRead(time_pin)==HIGH){
     Narcoleptic.delay(2000-millis()%1000); //set to collect data every 30 minutes
   }else{
-    Narcoleptic.delay(10000-millis()%1000); //set to collect data every minute
+    Narcoleptic.delay(1000-millis()%1000); //set to collect data every minute
   }
 }
+
+
