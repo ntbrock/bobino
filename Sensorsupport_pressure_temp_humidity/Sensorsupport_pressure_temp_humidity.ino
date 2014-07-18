@@ -24,11 +24,6 @@ MPL3115A2 baro;
 
 RTC_DS1307 RTC;
 
-//pins defined below are switches for unit conversions
-int temp_pin=0 ;//C to F
-int alt_pin=1 ;//meters to feet
-int time_pin=2 ;//1 min intervals and 30 min intervals
-
 
 void setup(){
   SD.begin(10); //This is the chipselect pin, change based on SD shield documentation.
@@ -40,41 +35,37 @@ void setup(){
   Wire.begin();
   RTC.begin();
   baro.begin();
-  baro.setModeBarometer();
-  baro.setModeAltimeter();
   baro.setOversampleRate(7);
   baro.enableEventFlags();
-  
-  pinMode(temp_pin, INPUT);
-  pinMode(alt_pin, INPUT);
-  pinMode(time_pin, INPUT);
+  baro.setModeStandby();
+ 
 }
 
 void loop(){
-  float pascals=baro.readPressure();
+
+  float pascals=getPressure();
   float inHg=pascals/3386.389; 
+  float altM=getAlt();
+  baro.setModeActive();
   float degC=baro.readTemp();
   float degF=baro.readTempF();
+  baro.setModeStandby();
+
   
   data=SD.open("data.csv", FILE_WRITE);
    timestamp();
   data.print(",");
-if(digitalRead(temp_pin)==HIGH){
     data.print(degC);
-  }else{
-    data.print(degF);
-  }
+  
   
   data.print(",");
-  data.print(dht.readHumidity()); //DHT uses "read" rather than "get." readTemperature is also available, but less accurate than other sensor
+  data.print(dht.readHumidity()); //DHT readTemperature is also available, but less accurate than other sensor
   data.print(",");
   data.print(inHg);
   data.print(",");
-  if(digitalRead(alt_pin)==HIGH){
-    data.print(baro.readAltitude());
-  }else{
-    data.print(baro.readAltitudeFt());
-  }
+
+    data.print(altM);
+  
   data.print(",");
   data.print(analogRead(photo_pin));
   data.print(",");
@@ -138,12 +129,23 @@ void timestamp(){
   data.print(now.second(), DEC);
 }
 
-void sleep(){
-  if(digitalRead(time_pin)==HIGH){
-    Narcoleptic.delay(2000-millis()%1000); //set to collect data every 30 minutes
-  }else{
-    Narcoleptic.delay(1000-millis()%1000); //set to collect data every minute
-  }
+float getPressure(){
+  baro.setModeBarometer();
+  baro.setModeActive();
+  delay(550);
+  return baro.readPressure();
+  baro.setModeStandby();
+}
+float getAlt(){
+  baro.setModeAltimeter(); 
+  baro.setModeActive();
+  delay(550);
+  return baro.readAltitude();
+  baro.setModeStandby();
 }
 
+
+void sleep(){
+  Narcoleptic.delay(1000-millis()%1000); //set to collect data every minute
+}
 
