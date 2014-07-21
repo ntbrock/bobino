@@ -24,6 +24,7 @@ MPL3115A2 baro;
 
 RTC_DS1307 RTC;
 
+int sleepTime=1;
 
 void setup(){
   SD.begin(10); //This is the chipselect pin, change based on SD shield documentation.
@@ -146,6 +147,16 @@ float getAlt(){
 
 
 void sleep(){
-  Narcoleptic.delay(1000-millis()%1000); //set to collect data every minute
+  long currentTime=getUnixTime();
+  long wakeTime=currentTime+(sleepTime*60)-1;
+  while(currentTime<wakeTime){
+    long sleepInterval=wakeTime-currentTime;
+    Narcoleptic.delay(sleepInterval*900);
+    currentTime=getUnixTime();
+  }
+}
+long getUnixTime(){
+  DateTime now=RTC.now();
+  return now.unixtime();
 }
 
