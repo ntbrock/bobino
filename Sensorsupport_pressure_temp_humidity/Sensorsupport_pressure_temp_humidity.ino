@@ -2,7 +2,7 @@
 /***********************************************************
 To Do:
 - Calibrate qualitative light descriptors
--Create separate functions to simplify loop() 
+
 - Set RTC from sd card:
   - Check for time.txt using SD.exist
   - Set RTC based on date/time values expressed in sd card, create specific format
@@ -148,7 +148,7 @@ float getAlt(){
 
 void sleep(){
   long currentTime=getUnixTime();
-  long wakeTime=currentTime+(sleepTime*60)-1;
+  long wakeTime=currentTime+(sleepTime*60)-2;
   while(currentTime<wakeTime){
     long sleepInterval=wakeTime-currentTime;
     Narcoleptic.delay(sleepInterval*900);
