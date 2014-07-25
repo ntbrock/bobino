@@ -30,7 +30,6 @@ String time;
 int sleepTime;
 
 void setup(){
-  Serial.begin(9600);
   SD.begin(10); //This is the chipselect pin, change based on SD shield documentation.
 
   createHeader();
@@ -47,9 +46,6 @@ void setup(){
 }
 
 void loop(){
-  Serial.println(sleepTime);
-  Serial.println(time);
-
   float pascals=getPressure();
   float inHg=pascals/3386.389; 
   float altM=getAlt();
@@ -168,11 +164,15 @@ void configure(){
   alt=SD.open("config/alt.txt", FILE_READ).read();
   File timetxt;
   timetxt=SD.open("config/time.txt",FILE_READ);
-  for(int i;i < timetxt.size();i++){
+  while(timetxt.peek()!=';'){
     char c=timetxt.read();
     time += c;
   }
+  if(!time){
+    sleepTime=10;
+  }else{
   sleepTime=atoi(time.c_str());
+  }
 }
 
 
