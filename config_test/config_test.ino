@@ -7,7 +7,7 @@ void setup() {
 // Turn the Serial Protocol ON
   Serial.begin(9600);
   SD.begin();
-  temp=SD.open("temp.txt",FILE_READ);
+  temp=SD.open("config/temp.txt",FILE_READ);
   byteRead=temp.read();
 }
 

@@ -1,6 +1,6 @@
 
 /***********************************************************
-This is exactly the same as the main sensor code, but with sd logging changed to serial output for debugging
+Early test of functionality over serial port
 ************************************************************/
 #include <Wire.h>
 #include <Adafruit_MPL3115A2.h> //Temperature/pressure sensor support. Available at https://github.com/adafruit/Adafruit_MPL3115A2_Library
@@ -9,7 +9,7 @@ This is exactly the same as the main sensor code, but with sd logging changed to
 #include <DHT.h> //This library supports DHTxx sensors, in this case DHT11 temp/ humidity. Available from https://github.com/adafruit/DHT-sensor-library
 #include <RTClib.h> //Available from https://github.com/adafruit/RTClib
 
-Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
+//Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
 #define DHTPIN 3    // what pin the DHT is connected to
 #define DHTTYPE DHT11 
 DHT dht(DHTPIN, DHTTYPE);
@@ -41,7 +41,7 @@ void setup(){
   Serial.print("Light (qualitative descriptor");
   Serial.println();
 
-  baro.begin();
+  //baro.begin();
   dht.begin();
   Wire.begin();
   RTC.begin();
@@ -54,8 +54,8 @@ void setup(){
 
 void loop(){
   DateTime now = RTC.now();
-  float pascals=baro.getPressure();
-  float inHg=pascals/3386.389; 
+  //float pascals=baro.getPressure();
+  //float inHg=pascals/3386.389; 
   float degC=baro.getTemperature();
   float degF=degC*9/5+32;
   float altM=baro.getAltitude();
