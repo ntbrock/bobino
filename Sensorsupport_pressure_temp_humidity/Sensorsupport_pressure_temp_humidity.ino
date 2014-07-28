@@ -4,8 +4,6 @@
  * - Calibrate qualitative light descriptors
  * 
  * - Set RTC from sd card:
- * - Check for time.txt using SD.exist
- * - Set RTC based on date/time values expressed in sd card, create specific format
  ************************************************************/
 #include <Wire.h>
 #include <MPL3115A2.h> //Temperature/pressure sensor support. Available at https://github.com/sparkfun/MPL3115A2_Breakout
@@ -31,7 +29,7 @@ int sleepTime;
 
 void setup(){
   SD.begin(10); //This is the chipselect pin, change based on SD shield documentation.
-
+  RTC_set();
   createHeader();
   configure(); 
   data.close();
@@ -91,6 +89,7 @@ void createHeader(){
     data.print(",");
     data.print("Light (qualitative descriptor");
     data.println();
+    data.close();
   }
   else{
     data=SD.open("data.csv", FILE_WRITE);
@@ -171,7 +170,7 @@ void configure(){
   if(!time){
     sleepTime=10;
   }else{
-  sleepTime=atoi(time.c_str());
+  sleepTime=time.toInt();
   }
 }
 
@@ -188,6 +187,33 @@ void sleep(){
 long getUnixTime(){
   DateTime now=RTC.now();
   return now.unixtime();
+}
+
+void RTC_set(){
+  File rtcset;
+  String timebuffer;
+  int timenow[5];
+  int i=0;
+  if(SD.exists("config/rtcset.txt")){
+    rtcset=SD.open("config/rtcset.txt",FILE_READ);
+     while(rtcset.peek()!=';'){
+      while(rtcset.peek()==' '||rtcset.peek()==','){
+        rtcset.read();
+      }
+      while(rtcset.peek()!=' '&&rtcset.peek()!=','&&rtcset.peek()!=';'){  
+        char c=rtcset.read();
+        timebuffer += c;
+        
+      }
+      
+      timenow[i]=timebuffer.toInt();
+      i++;
+      timebuffer="";
+   
+     } 
+      RTC.adjust(DateTime(timenow[0],timenow[1],timenow[2],timenow[3],timenow[4],timenow[5]));
+   
+  }
 }
 
 
