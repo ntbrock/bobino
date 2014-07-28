@@ -211,7 +211,7 @@ void RTC_set(){
    
      } 
       RTC.adjust(DateTime(timenow[0],timenow[1],timenow[2],timenow[3],timenow[4],timenow[5]));
-   
+     //SD.remove("config/rtcset.txt");  
   }
 }
 
