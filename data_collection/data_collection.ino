@@ -22,20 +22,20 @@ MPL3115A2 baro;
 RTC_DS1307 RTC;
 char temp;
 char alt;
-String time;
+
 
 int sleepTime;
 
 void setup(){
   SD.begin(10); //This is the chipselect pin, change based on SD shield documentation.
-  RTC_set();
-  createHeader();
-  configure(); 
-  data.close();
   dht.begin();
   Wire.begin();
   RTC.begin();
   baro.begin();
+  createHeader();
+  configure();
+  //RTC_set(); 
+  data.close();
   baro.setOversampleRate(7);
   baro.enableEventFlags();
   baro.setModeStandby();
@@ -160,7 +160,8 @@ float getTemp(){
 void configure(){
   temp=SD.open("config/temp.txt", FILE_READ).read();  
   alt=SD.open("config/alt.txt", FILE_READ).read();
-  File timetxt;
+   File timetxt;
+   String time;
   timetxt=SD.open("config/time.txt",FILE_READ);
   while(timetxt.peek()!=';'){
     char c=timetxt.read();
@@ -169,9 +170,10 @@ void configure(){
   if(!time){
     sleepTime=10;
   }else{
-  sleepTime=time.toInt();
+  sleepTime=atoi(time.c_str());
   }
 }
+
 
 
 void sleep(){
@@ -188,12 +190,12 @@ long getUnixTime(){
   return now.unixtime();
 }
 
-void RTC_set(){
-  File rtcset;
-  String timebuffer;
-  int timenow[5];
-  int i=0;
+void RTC_set(){ 
   if(SD.exists("config/rtcset.txt")){
+    File rtcset;
+    String timebuffer;
+    int timenow[5];
+    int i=0;
     rtcset=SD.open("config/rtcset.txt",FILE_READ);
      while(rtcset.peek()!=';'){
       while(rtcset.peek()==' '||rtcset.peek()==','){
@@ -211,7 +213,7 @@ void RTC_set(){
    
      } 
       RTC.adjust(DateTime(timenow[0],timenow[1],timenow[2],timenow[3],timenow[4],timenow[5]));
-     //SD.remove("config/rtcset.txt");  
+     SD.remove("config/rtcset.txt");  
   }
 }
 

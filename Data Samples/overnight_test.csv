@@ -1,4 +1,3 @@
-Time,Temperature,Humidity,Pressure (in Hg),Altitude (meters),Light (Raw value 0-1023),Light (qualitative descriptor
 7/21/2014 15:22,26.94,40,30.02,-26.94,412,bright
 7/21/2014 15:23,26.94,40,30.02,-27.81,415,bright
 7/21/2014 15:25,26.94,40,30.02,-28.56,439,bright
