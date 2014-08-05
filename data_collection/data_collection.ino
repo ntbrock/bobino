@@ -1,9 +1,7 @@
 /***********************************************************
- * To Do:
- * - Calibrate qualitative light descriptors
- * 
- * - Set RTC from sd card:
- ************************************************************/
+ * BOBino: An Arduino Sensor Platform by Max Tucker
+ * Full documentation, including a parts list, can be found at https://github.com/ntbrock/bobino
+************************************************************/
 #include <Wire.h>
 #include <MPL3115A2.h> //Temperature/pressure sensor support. Available at https://github.com/sparkfun/MPL3115A2_Breakout
 #include <Narcoleptic.h> //microcontroller sleep library
@@ -14,7 +12,7 @@
 #define DHTPIN 3    // what pin the DHT is connected to
 #define DHTTYPE DHT11 
 DHT dht(DHTPIN, DHTTYPE);
-int photo_pin = A0; //currently testing with photoresistor,connected to A0 and 5V, with 1kohm pulldown
+int photo_pin = A0; 
 File data; //initializes "data" as a file name
 
 MPL3115A2 baro;
@@ -34,7 +32,7 @@ void setup(){
   baro.begin();
   createHeader();
   configure();
-  //RTC_set(); 
+  RTC_set(); 
   data.close();
   baro.setOversampleRate(7);
   baro.enableEventFlags();
@@ -71,22 +69,30 @@ void loop(){
 
 }
 
-void createHeader(){
+void createHeader(){ //This function creates a header at the top of the data.csv file.
   if(SD.exists("data.csv") == false){  //only creates header if file doesn't exist
     data=SD.open("data.csv", FILE_WRITE);
     data.print("Time");
     data.print(",");
-    data.print("Temperature");
+    if(temp=='f'||temp=='F'){
+      data.print("Temperature (F)");
+    }else{
+      data.print("Temperature (C)");
+    }
     data.print(",");
     data.print("Humidity");
     data.print(",");
     data.print("Pressure (in Hg)");
     data.print(",");
+     if(alt=='f'||alt=='F'){
+       data.print("Altitude (Feet)");
+     }else{
     data.print("Altitude (meters)");
+     }
     data.print(",");
     data.print("Light (Raw value 0-1023)");
     data.print(",");
-    data.print("Light (qualitative descriptor");
+    data.print("Light (qualitative descriptor)");
     data.println();
     data.close();
   }
@@ -95,7 +101,7 @@ void createHeader(){
   }
 }
 
-void photoQual(){
+void photoQual(){ 
   //below prints qualitative descriptors of light intensity
   if(analogRead(photo_pin) < 10){
     data.print("dark");
@@ -114,7 +120,7 @@ void photoQual(){
   }
 }
 
-void timestamp(){
+void timestamp(){ //Current time is read from the RTC, and printed to the SD card.
   DateTime now = RTC.now();
   //timestamp from rtc
   data.print(now.year(), DEC);
@@ -149,6 +155,7 @@ float getAlt(){
   }
   baro.setModeStandby();
 }
+
 float getTemp(){
   if(temp=='f'||temp=='F'){
     return baro.readTempF();
@@ -157,7 +164,8 @@ float getTemp(){
     return baro.readTemp();
   }
 }
-void configure(){
+
+void configure(){ //This function reads the contents of the config folder on the SD card, and configures data collection accordingly.
   temp=SD.open("config/temp.txt", FILE_READ).read();  
   alt=SD.open("config/alt.txt", FILE_READ).read();
    File timetxt;
@@ -176,7 +184,7 @@ void configure(){
 
 
 
-void sleep(){
+void sleep(){ //Sleeps the arduino for the ammount of time specified by the config file, using the Narcoleptic sleep library.
   long currentTime=getUnixTime();
   long wakeTime=currentTime+(sleepTime*60)-2;
   while(currentTime<wakeTime){
@@ -190,7 +198,7 @@ long getUnixTime(){
   return now.unixtime();
 }
 
-void RTC_set(){ 
+void RTC_set(){ //sets rtc from the SD card in the even that it is improperly set.
   if(SD.exists("config/rtcset.txt")){
     File rtcset;
     String timebuffer;
