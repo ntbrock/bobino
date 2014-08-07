@@ -30,8 +30,8 @@ void setup(){
   Wire.begin();
   RTC.begin();
   baro.begin();
-  createHeader();
   configure();
+  createHeader();
   RTC_set(); 
   data.close();
   baro.setOversampleRate(7);
@@ -58,8 +58,10 @@ void loop(){
   data.print(",");
   data.print(inHg);
   data.print(",");
-  data.print(altM);
-  data.print(",");
+  if(SD.exists("config/alt.txt")){
+    data.print(altM);
+    data.print(",");
+  }
   data.print(analogRead(photo_pin));
   data.print(",");
   photoQual();
@@ -84,12 +86,14 @@ void createHeader(){ //This function creates a header at the top of the data.csv
     data.print(",");
     data.print("Pressure (in Hg)");
     data.print(",");
+    if(SD.exists("config/alt.txt")){
      if(alt=='f'||alt=='F'){
        data.print("Altitude (Feet)");
      }else{
     data.print("Altitude (meters)");
      }
     data.print(",");
+    }
     data.print("Light (Raw value 0-1023)");
     data.print(",");
     data.print("Light (qualitative descriptor)");
