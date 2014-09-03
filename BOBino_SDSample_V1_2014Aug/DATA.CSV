@@ -1,0 +1,3 @@
+Time,Temperature (F),Humidity,Pressure (in Hg),Light (Raw value 0-1023),Light (qualitative descriptor)
+2014/9/2 17:17:21,79.70,40.00,30.04,380,bright
+2014/9/2 17:22:20,79.93,40.00,30.04,378,bright
