@@ -1,0 +1,44 @@
+HOWTO Use Your Bobino
+BOBino V1 2014-Sep-01
+
+1) Assemble the unit:
+
+A. The Sensor Shield attaches on top of the Arduino Uno
+
+B. The SD Card is placed in the SD Card Slot of the sensor shield
+
+C. The Short USB Power cable is plugged into the battery, then plugged into the Arduino Uno
+
+D. The unit takes approximately 10 seconds to boot up, initialize the SD card and begin taking readings!
+
+
+2) Let the Unit Run for 3 minutes 
+
+The default sample rate is 1 reading per minute.
+
+3) Unplug the Power and Read the SD card with a computer.
+
+Remove the SD Card, and plug into any laptop or computer with an SD Card Reader.
+
+On the disk, you will see a file called 'DATA.CSV', example contents:
+
+Time,Temperature (F),Humidity,Pressure (in Hg),Light (Raw value 0-1023),Light (qualitative descriptor)
+2000/1/1 0:0:0,74.19,47.00,30.05,316,bright
+2014/9/5 16:27:0,74.75,47.00,30.05,323,bright
+2014/9/5 16:27:59,74.64,47.00,30.05,321,bright
+2014/9/5 16:28:59,74.75,47.00,30.05,319,bright
+2014/9/5 16:29:59,74.97,47.00,30.06,338,bright
+2014/9/5 16:30:59,75.09,47.00,30.05,326,bright
+
+
+4) Reconfigure to your settings!
+
+Adjust the settings on the Bobino is easy, simply edit the files in the CONFIG/ directory on the SD Card.
+
+Edit The following files to set Configuration: 
+   CONFIG/TEMP.TXT -- Set Temperature Units to F or C
+   CONFIG/TIME.TXT -- Set Time Sleep Interval in minutes
+   CONFIG/ALT.TXT -- Set Altitude Units and Activate
+   CONFIG/RTCSET.TXT -- Set To the current calendar information to adjust system time.
+   CONFIG/_RTCSET.TXT -- Example RTC File to make clock setting easy.
+
