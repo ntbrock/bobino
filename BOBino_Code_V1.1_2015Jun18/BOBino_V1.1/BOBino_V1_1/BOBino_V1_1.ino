@@ -156,7 +156,7 @@ void loop(){
   
   
   // Acquisition Time off temperature sensors
-  delay(750);
+  delay(700);
 
   float tempA = -1;
   float tempB = -1;
@@ -508,7 +508,7 @@ void sleep() { //Sleeps the arduino for the ammount of time specified by the con
     // Clock advancement - Use CPU Delay if < 1 second.
     if ( sleepInterval <= 1 ) { 
 
-      delay(250);  // Makes up for 750ms data acquisition time.
+      delay(50);  // Makes up for 750ms data acquisition + execution time.
       currentTime += 1;
       narcolepticAlternateTime += 1;
 
