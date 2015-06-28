@@ -32,6 +32,7 @@
 // SD Card and Sleep
 #include <SPI.h>
 #include <SD.h>
+#include <avr/sleep.h>
 
 #include <RTClib.h> //Available from https://github.com/adafruit/RTClib
 #include <Narcoleptic.h> //microcontroller sleep library. Available at https://code.google.com/p/narcoleptic/downloads/detail?name=Narcoleptic_v1a.zip
@@ -92,31 +93,36 @@ uint16_t freeMem() {
 
   if ( freeMemCount % 100 == 0 ) { 
   Serial.print(F("Debug: ["));
-  Serial.print( freeMemCount );
-  Serial.print(F("] SRAM Free: (Resetting at 350 free w/o warning)  "));
+  Serial.print( freeMemCount, DEC );
+  Serial.print(F("] SRAM Free: (Resetting at 350 free with NO warning)  "));
   Serial.println( freeMem );
   }
   freeMemCount++;
   
   if ( freeMem < LOW_MEMORY_FREE_REBOOT_THRESHOLD ) { 
-   Serial.print(F("Fatal: SRAM Free: (RESETTING NOW)  "));
-    Serial.println( freeMem );
+   Serial.print(F("FATAL: SRAM Free: (RESETTING NOW)  "));
+    Serial.println( freeMem, DEC );
+    Serial.flush();
     delay(50);
     resetFunc();  //call reset - no room for death squawk
   }
 }
 
-void setup(){
+void setup() {
+
   Serial.begin(9600);
   
-  Serial.println(F("BOBino V1.1 - ================ "));
+  Serial.println(F("BOBino V1.1 ==[setup]===="));
   freeMem();
   countResets();
-  delay(500);
-  
+  delay(50);
+
+
   //This is the chipselect pin, change based on SD shield documentation.
   if ( ! SD.begin(10) ) { 
-    Serial.println(F("ERROR: Unable to initalize SD Card. Can not continue."));
+    Serial.println(F("FATAL: Unable to begin SD Card."));
+    Serial.flush();
+    deathFlash();
   } else {     
 
     sensorsA.begin();
@@ -128,7 +134,6 @@ void setup(){
     RTC.begin();
 
     delay(50);
-  
     configure();
 
     createHeader();
@@ -137,26 +142,30 @@ void setup(){
     sensorsA.setResolution(10);
     sensorsB.setResolution(10);
     sensorsC.setResolution(10);
-  
-    Serial.print(F("BOBino V1.1 - Setup complete. Loop sleeps for seconds: "));
+
+    Serial.print(F("BOBino V1.1 ==[loop]====  Go! Loop sleeps seconds: "));
     Serial.println(sleepSeconds);
   }
 }
 
 int loopCount = 0;
+long lastReadMs = -1;
+
 void loop(){
-  //Serial.print(".");
+  loopCount += 1;
   freeMem();
+
+  lastReadMs = millis() + Narcoleptic.millis();
+  DateTime now = RTC.now();
 
   // Acquire All readings
   sensorsA.requestTemperatures(); 
   sensorsB.requestTemperatures(); 
   sensorsC.requestTemperatures(); 
-  float photoRead = analogRead(PHOTO_PIN);
-  
-  
+  byte photoRead = analogRead(PHOTO_PIN);
+    
   // Acquisition Time off temperature sensors
-  delay(700);
+  delay(650);
 
   float tempA = -1;
   float tempB = -1;
@@ -180,50 +189,72 @@ void loop(){
   File data=SD.open(DATA_FILENAME, FILE_WRITE);
   if ( data ) { 
 
-    timestamp(data);
+    timestamp(data, now);
     data.print(CSV);
-    data.print(resetCount);
+    data.print(lastReadMs, DEC);
     data.print(CSV);
-    data.print(tempA);
+    data.print(loopCount, DEC);
     data.print(CSV);
-    data.print(tempB);
+    data.print(resetCount, DEC);
     data.print(CSV);
-    data.print(tempC);
+    data.print(tempA, 2);
     data.print(CSV);
-    data.print(photoRead);
+    data.print(tempB, 2);
+    data.print(CSV);
+    data.print(tempC, 2);
+    data.print(CSV);
+    data.print(photoRead, DEC);
     data.print(CSV);
     photoQual(photoRead,data);
     data.println();
     data.close();
 
     // Also debug to serial console
-    timestampSerial();
+    timestampSerial(now);
     Serial.print(CSV);
-    Serial.print(resetCount);
+    Serial.print(lastReadMs, DEC);
     Serial.print(CSV);
-    Serial.print(tempA);
+    Serial.print(loopCount, DEC);
     Serial.print(CSV);
-    Serial.print(tempB);
+    Serial.print(resetCount, DEC);
     Serial.print(CSV);
-    Serial.print(tempC);
+    Serial.print(tempA, 2);
     Serial.print(CSV);
-    Serial.print(photoRead);
+    Serial.print(tempB, 2);
+    Serial.print(CSV);
+    Serial.print(tempC, 2);
+    Serial.print(CSV);
+    Serial.print(photoRead, DEC);
     Serial.print(CSV);
     Serial.println();
-
+    Serial.flush();
   } else { 
-     Serial.print(F("FATAL: Unable to write to SD card, DATA_FILENAME: "));
-     Serial.println(DATA_FILENAME);
+    Serial.print(F("FATAL: Unable to write to SD, File: "));
+    Serial.println(DATA_FILENAME);
+    Serial.flush();
+    deathFlash();
   }
   
   sleep();
 
 }
 
+// Death Flash
+void deathFlash() { 
+  cli();
+  sleep_enable();
+  sleep_cpu();
+}
+
+
 void createHeader(){ //This function creates a header at the top of the data.csv file.
   if(SD.exists(DATA_FILENAME) == false){  //only creates header if file doesn't exist
     File data=SD.open(DATA_FILENAME, FILE_WRITE);
     data.print("Time");
+    data.print(CSV);
+    data.print("LastReadMs");
+    data.print(CSV);
+    data.print("LoopCount");
     data.print(CSV);
     data.print("RebootCount");
     data.print(CSV);
@@ -245,9 +276,9 @@ void createHeader(){ //This function creates a header at the top of the data.csv
       data.print(F("TemperatureC (C)"));
     }
     data.print(CSV);
-    data.print(F("Light (Raw value 0-1023)"));
+    data.print(F("Light (0-1023)"));
     data.print(CSV);
-    data.print(F("Light (qualitative descriptor)"));
+    data.print(F("Light (Descriptor)"));
     data.println();
     data.close();
   }
@@ -260,29 +291,28 @@ void createHeader(){ //This function creates a header at the top of the data.csv
 void photoQual(float reading, File data){ 
   //below prints qualitative descriptors of light intensity
   if(reading < 10){
-    data.print(F("dark"));
+    data.print(F("Dark"));
     //data.print(F("dark"));
   }
   else if(reading<100){
-    data.print(F("dim"));
+    data.print(F("Dim"));
     //Serial.print(F("dim"));
   }
   else if(reading<300){
-    data.print(F("light"));
+    data.print(F("Light"));
     //Serial.print(F("light"));
   }
   else if(reading<600){
-    data.print(F("bright"));
+    data.print(F("Bright"));
     //Serial.print(F("bright"));
   }
   else{
-    data.print(F("very bright"));
+    data.print(F("Very Bright"));
     //Serial.print(F("very bright"));
   }
 }
 
-void timestamp(File data){ //Current time is read from the RTC, and printed to the SD card.
-  DateTime now = RTC.now();
+void timestamp(File data, DateTime &now){ //Current time is read from the RTC, and printed to the SD card.
   //timestamp from rtc
   data.print(now.year(), DEC);
   data.print('/');
@@ -290,31 +320,19 @@ void timestamp(File data){ //Current time is read from the RTC, and printed to t
   data.print('/');
   data.print(now.day(), DEC);
   data.print(' ');
+  if ( now.hour() < 10 ) { data.print("0"); }
   data.print(now.hour(), DEC);
   data.print(':');
-  data.print(now.minute(), DEC);
+  if ( now.minute() < 10 ) { data.print("0"); }
+  data.print(now.minute(), DEC );
   data.print(':');
+  if ( now.second() < 10 ) { data.print("0"); }
   data.print(now.second(), DEC);
 }
 
-void timestampSerial(){ //Current time is read from the RTC, and printed to the SD card.
-  Serial.print(getUnixTime());
-/*
-DateTime now = RTC.now();
-    //timestamp from rtc
-  Serial.print(now.year(), DEC);
-  Serial.print('/');
-  Serial.print(now.month(), DEC);
-  Serial.print('/');
-  Serial.print(now.day(), DEC);
-  Serial.print(' ');
-  Serial.print(now.hour(), DEC);
-  Serial.print(':');
-  Serial.print(now.minute(), DEC);
-  Serial.print(':');
-  Serial.print(now.second(), DEC);
- * 
- */}
+void timestampSerial(DateTime &now){ //Current time is read from the RTC, and printed to the SD card.
+  Serial.print(now.unixtime());
+}
 
 
 /**
@@ -335,16 +353,16 @@ void countResets() {
  */
   
 void configure(){ 
-  Serial.println(F("BOBino V1.1 - Configure beginning"));
+  //Serial.println(F("BOBino V1.1 - Configure Start"));
 
   // Create the config directory on the card if doesn't exist
   if ( SD.exists( CONFIG_DIR ) ) {
-      Serial.println(F("Good: Config directory: CONFIG_DIR exists."));
+      Serial.println(F("Info: SD Card Config directory: CONFIG exists."));
   } else { 
      if ( SD.mkdir( CONFIG_DIR ) ) { 
        Serial.println(F("Created Directory: CONFIG_DIR"));
      } else { 
-      Serial.println(F("ERROR: Unable to create directory: CONFIG_DIR"));
+      Serial.println(F("ERROR: Unable to create directory: CONFIG"));
     }
   }
   
@@ -371,7 +389,7 @@ void configure(){
     
     if ( sleepSeconds <= 0 ) { sleepSeconds = DEFAULT_SLEEP_SECONDS; } // Defensive.
     
-    Serial.print(F("Info: Configured Sleep seconds to be: "));
+    Serial.print(F("Info: Configured Sleep Seconds: "));
     Serial.print(sleepSeconds);
     Serial.println();
     
@@ -437,18 +455,18 @@ void configure(){
     fh.print(F("BOBino V1.1 2015-Jun-18"));
     fh.println();
     fh.println();
-    fh.print(F("Edit The following files to set Configuration: "));
+    fh.print(F("Edit files in the CONFIG Directory on this SD Card to set config: "));
     fh.println();
     fh.println(F("   CONFIG/TEMP.TXT -- Set Temperature Units to F or C"));
     fh.println(F("   CONFIG/SLEEPSEC.TXT -- Set Time Sleep Interval in Seconds"));
-    fh.println(F("   CONFIG/ALT.TXT -- Set Altitude Units and Activate"));
+    //fh.println(F("   CONFIG/ALT.TXT -- Set Altitude Units and Activate"));
     fh.println(F("   CONFIG/RTCSET.TXT -- Set To the current calendar information to adjust system time."));
     fh.println(F("   CONFIG/_RTCSET.TXT -- Example RTC File to make clock setting easy."));
     fh.print("");
     fh.println();
 //    fh.flush();
     fh.close();
-    Serial.println(F("Wrote file: README_FILENAME"));
+    Serial.println(F("Wrote file: README.txt"));
     }
   }
 
@@ -473,7 +491,7 @@ void configure(){
    Serial.print(F("Info: Unix Time is: "));
    Serial.println(unixTime);
    
-  Serial.println(F("BOBino V1.1 - Configure complete"));
+  //Serial.println(F("BOBino V1.1 - Configure complete"));
 }
 
 
@@ -481,60 +499,76 @@ uint8_t narcolepticIsWorking = 1;
 long narcolepticAlternateTime = 0;
 
 void sleep() { //Sleeps the arduino for the ammount of time specified by the config file, using the Narcoleptic sleep library.
-  long currentTime = getUnixTime();
-  long wakeTime = currentTime + sleepSeconds; // Version 1.1 - Changing timesleep to seconds
+//  long currentTime = getUnixTime();
+
+
+  // Sensor Reads take ~ 900ms
+  // Go off last read to avoid adding reading delays each time.
+  long wakeMs = (float)lastReadMs + ( (float)sleepSeconds * 1000.0 ); // Version 1.1 - Changing timesleep to seconds
+  long nextMs = -1;
   
-  while(currentTime<wakeTime){
-  
+  long currentMs = millis() + Narcoleptic.millis();
+  while ( currentMs < wakeMs ){
+
     // Sleep 1 second less than expected
-    long sleepInterval = wakeTime - currentTime - 1;
-    if ( sleepInterval < 1 ) { sleepInterval = 1; }
+    long sleepMs = wakeMs - currentMs;
+    if ( sleepMs < 1000 ) { sleepMs = 100; }
 
-    // Sleep DEBUGGING
-/*    
-    Serial.print(F("# Current Time: "));
-    Serial.print(currentTime);
-    Serial.print(F("  Wake Time: "));
-    Serial.print(wakeTime);
-    Serial.print(F("  Sleep Interval: "));
-    Serial.print(sleepInterval);
-    Serial.print(F("  Sleep Seconds: "));
-    Serial.println(sleepSeconds);
+/*
+    Serial.print(F("::: BEG current: " ));
+    Serial.print(currentMs);
+    Serial.print(F("  lastRead: " ));
+    Serial.print(lastReadMs);
+    Serial.print(F("  sleep: " ));
+    Serial.print(sleepMs);
+//    Serial.print(F("  sleepSec: "));
+//    Serial.print(sleepSeconds);
+    Serial.print(F("  wake: "));
+    Serial.println(wakeMs);
+    Serial.flush();
 */
-
-    // Default Initialziation
-    long newTime = currentTime;
-    
-    // Clock advancement - Use CPU Delay if < 1 second.
-    if ( sleepInterval <= 1 ) { 
-
-      delay(50);  // Makes up for 750ms data acquisition + execution time.
-      currentTime += 1;
-      narcolepticAlternateTime += 1;
-
+    if ( sleepMs < 1000 ) { 
+      // CPU Narrow in the last second.
+      delay(sleepMs);
     } else if ( narcolepticIsWorking ) { 
-      
-      Narcoleptic.delay(sleepInterval*995);
-      newTime = getUnixTime();
-      currentTime = newTime;
-      
+      Narcoleptic.delay( sleepMs - 450 );
+      delay(200);
     } else { 
-      
       // Narco is not working, use our alternate counter.
-      delay(sleepInterval*995);
-      narcolepticAlternateTime += sleepInterval;
-      currentTime = narcolepticAlternateTime;
+      delay(sleepMs);
     }
 
 
+    // Only set this at the end of the loop
+    nextMs = millis() + Narcoleptic.millis();  
+
+/*
+    Serial.print(F("::: END current: " ));
+    Serial.print(currentMs);
+    Serial.print(F("  next: " ));
+    Serial.println(nextMs);
+    Serial.flush();
+*/
     // Handle the case where no RTC exists and we need to advance the clock
     
-    if ( newTime <= currentTime && narcolepticIsWorking ) {
-        Serial.println("ERROR - Real Time Clock / Narcoleptic not working. Falling back to CPU delay.");
+ /*   if ( newTime <= currentTime && narcolepticIsWorking ) {
+        Serial.println(F("ERROR - Real Time Clock / Narcoleptic not working. Falling back to CPU delay."));
+
+        Serial.print(F("Logic Path: "));
+        Serial.print(path);
+        Serial.print(F("  Wake Time: "));
+        Serial.print(wakeTime);
+        Serial.print(F("  New Time: "));
+        Serial.print(newTime);
+        Serial.print(F("  Current Time: "));
+        Serial.println(currentTime);
+        
         narcolepticIsWorking = 0;  
     }
-    
+*/
 
+    currentMs = nextMs;
+    
   }
 }
 
@@ -542,7 +576,7 @@ long getUnixTime(){
   if ( narcolepticIsWorking ) { 
     DateTime now=RTC.now();
     if( now.year() > 2100 ) { 
-      Serial.println("ERROR: Real Time Clock / Narcoleptic not working, year > 2100."); 
+      Serial.println("ERROR: Real Time Clock not working, year > 2100."); 
       narcolepticIsWorking = 0;
       return narcolepticAlternateTime;        
     } else { 
@@ -586,7 +620,7 @@ void RTC_set(){ //sets rtc from the SD card in the even that it is improperly se
      RTC.adjust(DateTime(timenow[0],timenow[1],timenow[2],timenow[3],timenow[4],timenow[5]));
      SD.remove(RTC_FILENAME);  
 
-    Serial.print(F("INFO: Adjusted Real Time Clock to: "));
+    Serial.print(F("INFO: Set Real Time Clock: "));
     Serial.print( timenow[0], DEC );
     Serial.print( F("/") );
     Serial.print( timenow[1], DEC );
