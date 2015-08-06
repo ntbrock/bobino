@@ -1,7 +1,7 @@
-bobino
+BOBino
 ======
 
-BOBino is an open source, educational, environmental sensor program developed in Charleston, SC.
+BOBino is an open source, educational, environmental sensor kit developed in Charleston, SC.  BOBino is built on Arduino open source hardware and intended to increase learning in electronics, data collection, and statistical analysis for students.
 
 ## Getting started quickly? 
 
