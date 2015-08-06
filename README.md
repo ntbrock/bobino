@@ -3,6 +3,17 @@ bobino
 
 BOBino is an open source, educational, environmental sensor program developed in Charleston, SC.
 
-2014-Aug - Version 1 announced to the world and relased at teh SC Sea Grant eductator's workshop on Edisto Island, SC.
+h3. Getting started quickly? 
 
-Distribution version of code is in BOBino_Code_V1_2014Aug/, including build libraries.
+Read the document "HOWTO Use Your Bobino.txt"
+
+[a link](https://gist.github.com/ntbrock/bobino/blob/master/Documentation/HOWTO_Use_Your_Bobino.txt)
+
+h3. Announcing BOBino V1.5 at the South Carolina STEAM workshop
+
+View the presentation
+
+[a link](https://gist.github.com/ntbrock/bobino/blob/master/Documentation/BOBino%20STEAM%20Public%202015Aug.pdf)
+
+
+Latest codeset is in BOBino_Code_V1.1_2015Jun18, several Arduino libraries required: Narcoleptic, OneWire, DallasTemperature, RTClib
