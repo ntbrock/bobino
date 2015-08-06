@@ -1,5 +1,5 @@
 /***********************************************************
- * BOBino V1.1: An Arduino Sensor Platform by Max Tucker, Taylor Brockman
+ * BOBino V1.5: Arduino Sensor Platform by Max Tucker, Taylor Brockman
  * Full documentation, including a parts list, can be found at https://github.com/ntbrock/bobino
  *
  * This program is free software: you can redistribute it and/or modify
@@ -9,13 +9,14 @@
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESxS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * Change Log:
+ *  Brockman 2015-Jul-19: Official Version loaded onto 30 BOBino's, final analogRead timing fix.
  *  Brockman 2015-Jun-18: Inclusion of the DallasTemperature and Onewire libs
  *      Dedpopulated the MPL and DHT to opt for 3 temp sensors!
  *  Brockman 2014-Sep-02: Defaulted configurations for time so RAW SD card works
@@ -162,6 +163,7 @@ void loop(){
   sensorsA.requestTemperatures(); 
   sensorsB.requestTemperatures(); 
   sensorsC.requestTemperatures(); 
+  analogRead(PHOTO_PIN); // discard first reading, use 2nd
   byte photoRead = analogRead(PHOTO_PIN);
     
   // Acquisition Time off temperature sensors
@@ -512,7 +514,8 @@ void sleep() { //Sleeps the arduino for the ammount of time specified by the con
 
     // Sleep 1 second less than expected
     long sleepMs = wakeMs - currentMs;
-    if ( sleepMs < 1000 ) { sleepMs = 100; }
+    if ( sleepMs < 1000 ) { sleepMs = 100; } // Min Sleep 1 sec
+    if ( sleepMs > 30000 ) { sleepMs = 30000; } // Max sleep 30 sec
 
 /*
     Serial.print(F("::: BEG current: " ));
