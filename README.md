@@ -16,3 +16,9 @@ Read the document "HOWTO Use Your Bobino.txt"
 ## Ready to compile the code yourself?
 
 Latest codeset is in BOBino_Code_V1.1_2015Jun18, several Arduino libraries required: Narcoleptic, OneWire, DallasTemperature, RTClib
+
+## Ready to build your own board?
+
+Full schematic and PCB Layout avaialble on Autodesk's Circuits123
+
+https://123d.circuits.io/circuits/967024-bobino-1-6-environmental-data-logger-arduino-uno-shield
