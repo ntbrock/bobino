@@ -1,0 +1,8 @@
+BOBino V1.6 2016-Jun-25
+
+Edit files in the CONFIG Directory on this SD Card to set config: 
+   CONFIG/TEMP.TXT -- Set Temperature Units to F or C
+   CONFIG/SLEEPSEC.TXT -- Set Time Sleep Interval in Seconds
+   CONFIG/RTCSET.TXT -- Set To the current calendar information to adjust system time.
+   CONFIG/_RTCSET.TXT -- Example RTC File to make clock setting easy.
+
