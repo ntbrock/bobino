@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * Change Log:
+ *  Brockman 2016-Jul-17: Final Flash, Turned new date into Macro
  *  Brockman 2016-Jun-25: Code Revision, testing, and final OSH Park order for printed boards.
  *  Brockman 2015-Jul-19: Official Version loaded onto 30 BOBino's, final analogRead timing fix.
  *  Brockman 2015-Jun-18: Inclusion of the DallasTemperature and Onewire libs
@@ -45,6 +46,8 @@
 //http://www.instructables.com/id/two-ways-to-reset-arduino-in-software/step2/using-just-software/
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
+
+#define RTCSET_DATE "2016 07 17 12 00 00;"
 
 #define DEFAULT_SLEEP_SECONDS 15
 
@@ -441,7 +444,7 @@ void configure(){
     // Create the default value file on the new SD card. 
     File fh=SD.open(RTC_EXAMPLE, FILE_WRITE);
     if ( fh ) { 
-      fh.print( F("2015 01 01 00 00 00;"));
+      fh.print( F(RTCSET_DATE));
       fh.println();
       fh.flush();
       fh.close();
