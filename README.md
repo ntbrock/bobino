@@ -7,18 +7,20 @@ BOBino is an open source, educational, environmental sensor kit developed in Cha
 
 Read the document "HOWTO Use Your Bobino.txt"
 
-[HOWTO Use Your BOBino](https://gist.github.com/ntbrock/bobino/blob/master/Documentation/HOWTO_Use_Your_Bobino.txt)
+[HOWTO Use Your BOBino](https://github.com/ntbrock/bobino/blob/master/Documentation/HOWTO_Use_Your_Bobino.txt?raw=true)
 
-## Announcing BOBino V1.5 at the South Carolina STEAM workshop
+## Announcing BOBino V1.6 at the South Carolina STEAM workshop
 
-[View the August 2015 STEAM Workshop Presentation](https://gist.github.com/ntbrock/bobino/blob/master/Documentation/BOBino%20STEAM%20Public%202015Aug.pdf)
+[View the July 2016 STEAM Workshop Presentation](https://github.com/ntbrock/bobino/blob/master/Documentation/BOBino%20STEAM%20Public%202016Jul.pptx?raw=true)
 
 ## Ready to compile the code yourself?
 
-Latest codeset is in BOBino_Code_V1.1_2015Jun18, several Arduino libraries required: Narcoleptic, OneWire, DallasTemperature, RTClib
+Latest codeset is in BOBino_Code_V1.6_2016Jun25, several Arduino libraries required: Narcoleptic, OneWire, DallasTemperature, RTClib
 
 ## Ready to build your own board?
 
 Full schematic and PCB Layout avaialble on Autodesk's Circuits123
 
-https://123d.circuits.io/circuits/967024-bobino-1-6-environmental-data-logger-arduino-uno-shield
+https://circuits.io/circuits/2376213-bobino-1-6h-environmental-data-logger-arduino-uno-half-shield
+
+
