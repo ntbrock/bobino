@@ -1,5 +1,5 @@
 /***********************************************************
- * BOBino V1.6: Arduino Sensor Platform by Max Tucker, Taylor Brockman
+ * BOBino V1.6.1: Arduino Sensor Platform by Max Tucker, Taylor Brockman
  * Full documentation, including a parts list, can be found at https://github.com/ntbrock/bobino
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * Change Log:
- *  Brockman 2016-Jul-17: Final Flash, Turned new date into Macro
+ *  Brockman 2017-Jul-23: 1.6.1 - Photo reading into int instead of byte to stabilize values
+ *  Brockman 2016-Jul-17: 1.6 - Final Flash, Turned new date into Macro
  *  Brockman 2016-Jun-25: Code Revision, testing, and final OSH Park order for printed boards.
  *  Brockman 2015-Jul-19: Official Version loaded onto 30 BOBino's, final analogRead timing fix.
  *  Brockman 2015-Jun-18: Inclusion of the DallasTemperature and Onewire libs
@@ -47,7 +48,7 @@
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 
-#define RTCSET_DATE "2016 07 17 12 00 00;"
+#define RTCSET_DATE "2017 07 23 13 50 00;"
 
 #define DEFAULT_SLEEP_SECONDS 15
 
@@ -117,7 +118,7 @@ void setup() {
 
   Serial.begin(9600);
   
-  Serial.println(F("BOBino V1.6 ==[setup]===="));
+  Serial.println(F("BOBino V1.6.1 ==[setup]===="));
   freeMem();
   countResets();
   delay(50);
@@ -148,7 +149,7 @@ void setup() {
     sensorsB.setResolution(10);
     sensorsC.setResolution(10);
 
-    Serial.print(F("BOBino V1.6 ==[loop]====  Go! Loop sleeps seconds: "));
+    Serial.print(F("BOBino V1.6.1 ==[loop]====  Go! Loop sleeps seconds: "));
     Serial.println(sleepSeconds);
   }
 }
@@ -168,7 +169,8 @@ void loop(){
   sensorsB.requestTemperatures(); 
   sensorsC.requestTemperatures(); 
   analogRead(PHOTO_PIN); // discard first reading, use 2nd
-  byte photoRead = analogRead(PHOTO_PIN);
+  // Data capacity fix for Photo fluctuation
+  int photoRead = analogRead(PHOTO_PIN);
     
   // Acquisition Time off temperature sensors
   delay(650);
@@ -359,7 +361,7 @@ void countResets() {
  */
   
 void configure(){ 
-  //Serial.println(F("BOBino V1.6 - Configure Start"));
+  //Serial.println(F("BOBino V1.6.1 - Configure Start"));
 
   // Create the config directory on the card if doesn't exist
   if ( SD.exists( CONFIG_DIR ) ) {
@@ -458,7 +460,7 @@ void configure(){
     // Create the default value file on the new SD card. 
     File fh=SD.open(README_FILENAME, FILE_WRITE);
     if ( fh ) {
-    fh.print(F("BOBino V1.6 2016-Jun-25"));
+    fh.print(F("BOBino V1.6.1 2017-Jul-23"));
     fh.println();
     fh.println();
     fh.print(F("Edit files in the CONFIG Directory on this SD Card to set config: "));
@@ -497,7 +499,7 @@ void configure(){
    Serial.print(F("Info: Unix Time is: "));
    Serial.println(unixTime);
    
-  //Serial.println(F("BOBino V1.6 - Configure complete"));
+  //Serial.println(F("BOBino V1.6.1 - Configure complete"));
 }
 
 

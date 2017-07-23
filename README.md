@@ -3,6 +3,13 @@ BOBino
 
 BOBino is an open source, educational, environmental sensor kit developed in Charleston, SC.  BOBino is built on Arduino open source hardware and intended to increase learning in electronics, data collection, and statistical analysis for students.
 
+## Latest Release
+
+Software: Version 1.6.1 (master)
+
+Hardware: Version 1.6H (oshpark)
+
+
 ## Getting started quickly? 
 
 Read the document "HOWTO Use Your Bobino.txt"
