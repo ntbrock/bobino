@@ -1,20 +1,37 @@
 HOWTO Use Your Bobino
-BOBino V1 2014-Sep-01
+BOBino V1.6 2017-Jul-27
+
+0) BOBino kit contents:
+
+   BOBino Purple Shield
+   Data Logger Shield
+   Arduino UNO Base
+   USB Battery
+   USB Square Cable
+   USB Tiny Cable (for recharging battery)
+   Two Temperature Probes
+   Waterproof enclosure (Tupperware or Ziplock)
+
 
 1) Assemble the unit:
 
-A. The Sensor Shield attaches on top of the Arduino Uno
+A. Combine the shields: BOBino on top, Data Logger shield in the middle, Arduino UNO on the bottom.
 
-B. The SD Card is placed in the SD Card Slot of the sensor shield
+B. Connect the temperature probes into Temp 1 and Temp 3, the plug will clip in with the clip facing up.
 
-C. The Short USB Power cable is plugged into the battery, then plugged into the Arduino Uno
+C. Place an SD Card Chip into Data Logger shield. If the card is blank, the first time BOBino boots up, it will write a new DATA.CSV file and create a CONFIG directory.
 
-D. The unit takes approximately 10 seconds to boot up, initialize the SD card and begin taking readings!
+D. Plus the USB Power cable with the square end into the Arduino Uno, then plug the rectangular end into the USB Battery.
+
+E. The unit takes approximately 5 seconds to boot up, initialize the SD card and begin taking readings!
+
+F. Be sure that when you mount the BOBino into its waterproof case the photo sensor can see the sunlight and is not upside down.  I like to mount one temperature probe in the air and the other temperature probe into the water.
 
 
 2) Let the Unit Run for 3 minutes 
 
 The default sample rate is 1 reading per minute.
+
 
 3) Unplug the Power and Read the SD card with a computer.
 
