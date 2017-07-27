@@ -18,7 +18,7 @@ Read the document "HOWTO Use Your Bobino.txt"
 
 ## Announcing BOBino V1.6 at the South Carolina STEAM workshop
 
-[View the July 2016 STEAM Workshop Presentation](https://github.com/ntbrock/bobino/blob/master/Documentation/BOBino%20STEAM%20Public%202016Jul.pptx?raw=true)
+[View the July 2017 STEAM Workshop Presentation](https://github.com/ntbrock/bobino/blob/master/Documentation/BOBino%20STEAM%20Public%202017Jul.pptx?raw=true)
 
 ## Ready to compile the code yourself?
 
@@ -29,5 +29,10 @@ Latest codeset is in BOBino_Code_V1.6_2016Jun25, several Arduino libraries requi
 Full schematic and PCB Layout avaialble on Autodesk's Circuits123
 
 https://circuits.io/circuits/2376213-bobino-1-6h-environmental-data-logger-arduino-uno-half-shield
+
+## Ready to order BOBino Kits or Arduino Shields for your classroom or workshop?
+
+Email taylor.brockman@gmail.com with the Subject line: BOBino Order Information
+
 
 
