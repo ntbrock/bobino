@@ -1,0 +1,7 @@
+1606 -> 1573 by removing one of the sensor kits (78%)
+
+1606 -> 1239 by disabling the u2g2 1306 1 wire  (60%)
+
+1242 after upgrading library dependencies
+
+

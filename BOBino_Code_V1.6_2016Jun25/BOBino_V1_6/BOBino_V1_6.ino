@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * Change Log:
+ *  Brockman 2017-Feb-25: 1.8.0 - Output to OLED ssd1306 display
  *  Brockman 2017-Jul-23: 1.6.1 - Photo reading into int instead of byte to stabilize values
  *  Brockman 2016-Jul-17: 1.6 - Final Flash, Turned new date into Macro
  *  Brockman 2016-Jun-25: Code Revision, testing, and final OSH Park order for printed boards.
@@ -34,9 +35,9 @@
 #include <DallasTemperature.h>
 
 // SD Card and Sleep
-#include <SPI.h>
+//#include <SPI.h>
 #include <SD.h>
-#include <avr/sleep.h>
+//#include <avr/sleep.h>
 
 #include <RTClib.h> //Available from https://github.com/adafruit/RTClib
 #include <Narcoleptic.h> //microcontroller sleep library. Available at https://code.google.com/p/narcoleptic/downloads/detail?name=Narcoleptic_v1a.zip
@@ -44,13 +45,20 @@
 //http://www.arduino.cc/en/Tutorial/EEPROMWrite
 #include <EEPROM.h>
 
+// 2018Feb25 Including Display
+//#include <Arduino.h>
+#include <U8g2lib.h>
+//#include <Wire.h>
+
+
+
 //http://www.instructables.com/id/two-ways-to-reset-arduino-in-software/step2/using-just-software/
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 
 #define RTCSET_DATE "2017 07 23 13 50 00;"
 
-#define DEFAULT_SLEEP_SECONDS 15
+#define DEFAULT_SLEEP_SECONDS 3 //15
 
 
 // Enable up to three differene one wire busses
@@ -63,27 +71,29 @@ void(* resetFunc) (void) = 0; //declare reset function @ address 0
 #define PHOTO_PIN A0
 
 RTC_DS1307 RTC;
-OneWire oneWireA(ONE_WIRE_BUS_A);
-OneWire oneWireB(ONE_WIRE_BUS_B);
-OneWire oneWireC(ONE_WIRE_BUS_C);
-
-DallasTemperature sensorsA(&oneWireA);
-DallasTemperature sensorsB(&oneWireB);
-DallasTemperature sensorsC(&oneWireC);
 
 char temp = 'F';
-char alt = 'F';
 short sleepSeconds = DEFAULT_SLEEP_SECONDS;
 
-#define CSV ","
-#define DATA_FILENAME "data.csv"
-#define RTC_FILENAME "config/rtcset.txt"
-#define CONFIG_DIR "config"
-#define TIME_FILENAME "config/sleepsec.txt"
-#define TEMP_FILENAME "config/temp.txt"
-#define ALT_FILENAME "config/alt.txt"
-#define RTC_EXAMPLE "config/_rtcset.txt"
-#define README_FILENAME "BOBino.txt"
+#define ZERO F("0")
+#define SLASH F("/")
+#define SPACE F(" ")
+#define COLON F(":")
+#define SEMI F(";")
+#define CSV F(",")
+
+#define Fchar 'f'
+#define FCHAR 'F'
+
+
+#define DATA_FILENAME F("data.csv")
+#define RTC_FILENAME F("config/rtcset.txt")
+#define CONFIG_DIR F("config")
+#define TIME_FILENAME F("config/sleepsec.txt")
+#define TEMP_FILENAME F("config/temp.txt")
+#define ALT_FILENAME F("config/alt.txt")
+#define RTC_EXAMPLE F("config/_rtcset.txt")
+#define README_FILENAME F("BOBino.txt")
 
 #define LOW_MEMORY_FREE_REBOOT_THRESHOLD 350
 #define EEPROM_ADDR_Reset_Counter 0
@@ -91,6 +101,13 @@ short sleepSeconds = DEFAULT_SLEEP_SECONDS;
 //https://gist.github.com/ntbrock/4d0bec130f943861a0ba
 byte resetCount = 0;
 byte freeMemCount = 0;
+
+
+U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // All Boards without Reset of the Display
+
+
+
+/*
 uint16_t freeMem() {
   char top;
   extern char *__brkval;
@@ -113,27 +130,29 @@ uint16_t freeMem() {
     resetFunc();  //call reset - no room for death squawk
   }
 }
+*/
 
 void setup() {
+
+  u8g2.begin();
 
   Serial.begin(9600);
   
   Serial.println(F("BOBino V1.6.1 ==[setup]===="));
-  freeMem();
+  //freeMem();
   countResets();
   delay(50);
 
+ //u8g2.setFont(u8g2_font_ncenB14_tr);  
+ 
 
   //This is the chipselect pin, change based on SD shield documentation.
   if ( ! SD.begin(10) ) { 
     Serial.println(F("FATAL: Unable to begin SD Card."));
     Serial.flush();
-    deathFlash();
+    //deathFlash();
   } else {     
 
-    sensorsA.begin();
-    sensorsB.begin();
-    sensorsC.begin();
     delay(50);
 
     Wire.begin();
@@ -145,9 +164,6 @@ void setup() {
     createHeader();
     RTC_set(); 
 
-    sensorsA.setResolution(10);
-    sensorsB.setResolution(10);
-    sensorsC.setResolution(10);
 
     Serial.print(F("BOBino V1.6.1 ==[loop]====  Go! Loop sleeps seconds: "));
     Serial.println(sleepSeconds);
@@ -155,11 +171,39 @@ void setup() {
 }
 
 int loopCount = 0;
+
 long lastReadMs = -1;
 
+
+
+
+
+char oledBuffer[12] = "       ";
+
+
 void loop(){
+
+  OneWire oneWireA(ONE_WIRE_BUS_A);
+  OneWire oneWireB(ONE_WIRE_BUS_B);
+  OneWire oneWireC(ONE_WIRE_BUS_C);
+  
+  DallasTemperature sensorsA(&oneWireA);
+  DallasTemperature sensorsB(&oneWireB);
+  DallasTemperature sensorsC(&oneWireC);
+
+      sensorsA.begin();
+    sensorsB.begin();
+    sensorsC.begin();
+
+    sensorsA.setResolution(10);
+    sensorsB.setResolution(10);
+    sensorsC.setResolution(10);
+
+
+
+
   loopCount += 1;
-  freeMem();
+  //freeMem();
 
   lastReadMs = millis() + Narcoleptic.millis();
   DateTime now = RTC.now();
@@ -179,7 +223,7 @@ void loop(){
   float tempB = -1;
   float tempC = -1; 
   
-  if(temp=='f'||temp=='F'){
+  if(temp==Fchar||temp==FCHAR){
     tempA = sensorsA.getTempFByIndex(0);
     tempB = sensorsB.getTempFByIndex(0);
     tempC = sensorsC.getTempFByIndex(0);
@@ -193,6 +237,30 @@ void loop(){
   if ( tempA == 32.00 ) { tempA = -1; }
   if ( tempB == 32.00 ) { tempB = -1; }
   if ( tempC == 32.00 ) { tempC = -1; }
+
+    
+
+    
+    // OLED PRINT
+    u8g2.firstPage();
+    do {
+        //u8g2.setFont(u8g2_font_5x7_tr);
+
+        u8g2.setFont(u8g2_font_10x20_tr);
+
+      sprintf(oledBuffer, "TempA: %d", (int)tempA);
+       u8g2.drawStr(3,16,oledBuffer );
+
+      sprintf(oledBuffer, "TempB: %d", (int)tempB);
+       u8g2.drawStr(3,34,oledBuffer );
+
+      sprintf(oledBuffer, "TempC: %d", (int)tempC);
+       u8g2.drawStr(3,56,oledBuffer );
+
+       u8g2.drawLine(0, 0, loopCount, 0 );
+//       u8g2.drawLine(0, 0, 100, 100);
+    } while ( u8g2.nextPage() );
+
 
   File data=SD.open(DATA_FILENAME, FILE_WRITE);
   if ( data ) { 
@@ -217,8 +285,14 @@ void loop(){
     data.println();
     data.close();
 
-    // Also debug to serial console
-    timestampSerial(now);
+
+
+    // Reduced debug to serial console to make room for OLED
+      Serial.print(now.unixtime());
+//    timestampSerial(now);
+    Serial.println();
+    Serial.flush();
+    /*    
     Serial.print(CSV);
     Serial.print(lastReadMs, DEC);
     Serial.print(CSV);
@@ -236,49 +310,52 @@ void loop(){
     Serial.print(CSV);
     Serial.println();
     Serial.flush();
+    */
   } else { 
+
     Serial.print(F("FATAL: Unable to write to SD, File: "));
     Serial.println(DATA_FILENAME);
     Serial.flush();
-    deathFlash();
+    //deathFlash();
   }
   
   sleep();
 
 }
 
+/*
 // Death Flash
 void deathFlash() { 
   cli();
   sleep_enable();
   sleep_cpu();
 }
-
+*/
 
 void createHeader(){ //This function creates a header at the top of the data.csv file.
   if(SD.exists(DATA_FILENAME) == false){  //only creates header if file doesn't exist
     File data=SD.open(DATA_FILENAME, FILE_WRITE);
-    data.print("Time");
+    data.print(F("Time"));
     data.print(CSV);
-    data.print("LastReadMs");
+    data.print(F("LastReadMs"));
     data.print(CSV);
-    data.print("LoopCount");
+    data.print(F("LoopCount"));
     data.print(CSV);
-    data.print("RebootCount");
+    data.print(F("RebootCount"));
     data.print(CSV);
-    if(temp=='f'||temp=='F'){
+    if(temp==Fchar||temp==FCHAR){
       data.print(F("TemperatureA (F)"));
     }else{
       data.print(F("TemperatureA (C)"));
     }
     data.print(CSV);
-    if(temp=='f'||temp=='F'){
+    if(temp==Fchar||temp==FCHAR){
       data.print(F("TemperatureB (F)"));
     }else{
       data.print(F("TemperatureB (C)"));
     }
     data.print(CSV);
-    if(temp=='f'||temp=='F'){
+    if(temp==Fchar||temp==FCHAR){
       data.print(F("TemperatureC (F)"));
     }else{
       data.print(F("TemperatureC (C)"));
@@ -296,7 +373,7 @@ void createHeader(){ //This function creates a header at the top of the data.csv
   }
 }
 
-void photoQual(float reading, File data){ 
+void photoQual(int reading, File data){ 
   //below prints qualitative descriptors of light intensity
   if(reading < 10){
     data.print(F("Dark"));
@@ -323,25 +400,26 @@ void photoQual(float reading, File data){
 void timestamp(File data, DateTime &now){ //Current time is read from the RTC, and printed to the SD card.
   //timestamp from rtc
   data.print(now.year(), DEC);
-  data.print('/');
+  data.print(SLASH);
   data.print(now.month(), DEC);
-  data.print('/');
+  data.print(SLASH);
   data.print(now.day(), DEC);
-  data.print(' ');
-  if ( now.hour() < 10 ) { data.print("0"); }
+  data.print(SPACE);
+  if ( now.hour() < 10 ) { data.print(ZERO); }
   data.print(now.hour(), DEC);
-  data.print(':');
-  if ( now.minute() < 10 ) { data.print("0"); }
+  data.print(COLON);
+  if ( now.minute() < 10 ) { data.print(ZERO); }
   data.print(now.minute(), DEC );
-  data.print(':');
-  if ( now.second() < 10 ) { data.print("0"); }
+  data.print(COLON);
+  if ( now.second() < 10 ) { data.print(ZERO); }
   data.print(now.second(), DEC);
 }
 
-void timestampSerial(DateTime &now){ //Current time is read from the RTC, and printed to the SD card.
+
+/*void timestampSerial(DateTime &now){ //Current time is read from the RTC, and printed to the SD card.
   Serial.print(now.unixtime());
 }
-
+*/
 
 /**
  * Read the beginning of the EEPROM to get the number of resets and + 1.
@@ -362,6 +440,7 @@ void countResets() {
   
 void configure(){ 
   //Serial.println(F("BOBino V1.6.1 - Configure Start"));
+/*
 
   // Create the config directory on the card if doesn't exist
   if ( SD.exists( CONFIG_DIR ) ) {
@@ -373,6 +452,7 @@ void configure(){
       Serial.println(F("ERROR: Unable to create directory: CONFIG"));
     }
   }
+*/
   
   Serial.print(F("Info: Initializing Time. Contents of SLEEPSEC.TXT: "));
   
@@ -383,11 +463,13 @@ void configure(){
     if(timetxt > 0 ) {
       char c = timetxt.read();
       while(c!=';' && c != -1){
-      Serial.print( c );
+ 
+      
+      //Serial.print( c );
         time += c;
         c=timetxt.read();
       }
-      Serial.println();
+      //Serial.println();
     }
     if(!timetxt || !time){
       sleepSeconds = DEFAULT_SLEEP_SECONDS;
@@ -397,17 +479,18 @@ void configure(){
     
     if ( sleepSeconds <= 0 ) { sleepSeconds = DEFAULT_SLEEP_SECONDS; } // Defensive.
     
-    Serial.print(F("Info: Configured Sleep Seconds: "));
-    Serial.print(sleepSeconds);
-    Serial.println();
+ //   Serial.print(F("Info: Configured Sleep Seconds: "));
+ //   Serial.print(sleepSeconds);
+ //   Serial.println();
     
   } else { 
+    /*
      // Create the default value file on the new SD card. 
     // Create the default value file on the new SD card. 
     File fh=SD.open(TIME_FILENAME, FILE_WRITE);
     if ( fh ) { 
       fh.print( sleepSeconds );
-      fh.print(";");
+      fh.print(SEMI);
       fh.println();
       fh.flush();
       fh.close();
@@ -417,9 +500,10 @@ void configure(){
       Serial.print(F("ERROR: Unable to create file: "));
       Serial.println(TIME_FILENAME);
     }
+    */
   }
  
-  
+  /*  
   if ( SD.exists( TEMP_FILENAME ) ) {
     temp=SD.open(TEMP_FILENAME, FILE_READ).read();  
   } else { 
@@ -427,7 +511,7 @@ void configure(){
     File fh=SD.open(TEMP_FILENAME, FILE_WRITE);
     if ( fh ) { 
       fh.print( temp );
-      fh.print( ";");
+      fh.print( SEMI);
       fh.println();
       fh.flush();
       fh.close();
@@ -436,11 +520,12 @@ void configure(){
       Serial.println(F("ERROR: Unable to create file: TEMP_FILENAME"));
     }
   }
-  if ( temp != 'F' && temp != 'f' && temp != 'C' && temp != 'c' ) { temp = 'F'; } // Defense!
+  if ( temp != FCHAR && temp != Fchar && temp != 'C' && temp != 'c' ) { temp = FCHAR; } // Defense!
+*/
+/*
   Serial.print(F("Info: Configured Temp to be: "));
   Serial.print(temp);
   Serial.println();
-    
     
   if ( ! SD.exists( RTC_EXAMPLE ) ) {
     // Create the default value file on the new SD card. 
@@ -455,12 +540,16 @@ void configure(){
       Serial.println(F("ERROR: Unable to create file: RTC_EXAMPLE"));
     }
   }
-    
+    */  
+
+    /*
   if ( ! SD.exists( README_FILENAME ) ) {
     // Create the default value file on the new SD card. 
     File fh=SD.open(README_FILENAME, FILE_WRITE);
     if ( fh ) {
-    fh.print(F("BOBino V1.6.1 2017-Jul-23"));
+    
+    fh.print(F("BOBino V1.8 2018Feb25 http://github.com/ntbrock/bobino"));
+    
     fh.println();
     fh.println();
     fh.print(F("Edit files in the CONFIG Directory on this SD Card to set config: "));
@@ -477,33 +566,35 @@ void configure(){
     Serial.println(F("Wrote file: README.txt"));
     }
   }
+    */
 
 
 
+/*
     DateTime now = RTC.now();   
     Serial.print(F("Info: System Time is: "));
     Serial.print(now.year(), DEC);
-    Serial.print(F("/"));
+    Serial.print(SLASH);
     Serial.print(now.month(), DEC);
-    Serial.print(F("/"));
+    Serial.print(SLASH);
     Serial.print(now.day(), DEC);
     Serial.print(F("T"));
     Serial.print(now.hour(), DEC);
-    Serial.print(F(":"));
+    Serial.print(COLON);
     Serial.print(now.minute(), DEC);
-    Serial.print(F(":"));
+    Serial.print(COLON);
     Serial.print(now.second(), DEC);
     Serial.println();
 
    long unixTime = getUnixTime();
    Serial.print(F("Info: Unix Time is: "));
    Serial.println(unixTime);
-   
+  */ 
   //Serial.println(F("BOBino V1.6.1 - Configure complete"));
 }
 
 
-uint8_t narcolepticIsWorking = 1;
+bool narcolepticIsWorking = true;
 long narcolepticAlternateTime = 0;
 
 void sleep() { //Sleeps the arduino for the ammount of time specified by the config file, using the Narcoleptic sleep library.
@@ -512,7 +603,7 @@ void sleep() { //Sleeps the arduino for the ammount of time specified by the con
 
   // Sensor Reads take ~ 900ms
   // Go off last read to avoid adding reading delays each time.
-  long wakeMs = (float)lastReadMs + ( (float)sleepSeconds * 1000.0 ); // Version 1.6 - Changing timesleep to seconds
+  long wakeMs = lastReadMs + ( sleepSeconds * 1000 ); // Version 1.6 - Changing timesleep to seconds
   long nextMs = -1;
   
   long currentMs = millis() + Narcoleptic.millis();
@@ -585,8 +676,8 @@ long getUnixTime(){
   if ( narcolepticIsWorking ) { 
     DateTime now=RTC.now();
     if( now.year() > 2100 ) { 
-      Serial.println("ERROR: Real Time Clock not working, year > 2100."); 
-      narcolepticIsWorking = 0;
+      Serial.println(F("ERROR: Real Time Clock not working, year > 2100.")); 
+      narcolepticIsWorking = false;
       return narcolepticAlternateTime;        
     } else { 
       return now.unixtime();
@@ -613,6 +704,8 @@ void RTC_set(){ //sets rtc from the SD card in the even that it is improperly se
         timebuffer += c;
         
       }
+
+      /*
       Serial.print(F("DEBUG> Time Buffer: "));
       Serial.print(timebuffer);
       Serial.println();
@@ -621,7 +714,8 @@ void RTC_set(){ //sets rtc from the SD card in the even that it is improperly se
       Serial.print(F("DEBUG> Time Now: "));
       Serial.print(timenow[i]);
       Serial.println();
-
+      */
+      
       i++;
       timebuffer="";
    
@@ -629,19 +723,21 @@ void RTC_set(){ //sets rtc from the SD card in the even that it is improperly se
      RTC.adjust(DateTime(timenow[0],timenow[1],timenow[2],timenow[3],timenow[4],timenow[5]));
      SD.remove(RTC_FILENAME);  
 
+   /* 
     Serial.print(F("INFO: Set Real Time Clock: "));
-    Serial.print( timenow[0], DEC );
-    Serial.print( F("/") );
+   Serial.print( timenow[0], DEC );
+    Serial.print( SLASH );
     Serial.print( timenow[1], DEC );
-    Serial.print( F("/") );
+    Serial.print( SLASH );
     Serial.print( timenow[2], DEC );
     Serial.print( F("T") );
     Serial.print( timenow[3], DEC );
-    Serial.print( F(":") );
+    Serial.print( COLON );
     Serial.print( timenow[4], DEC );
-    Serial.print( F(":") );
+    Serial.print( COLON );
     Serial.print( timenow[5], DEC );
     Serial.println();
+    */
   }
 }
 
