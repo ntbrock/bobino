@@ -140,7 +140,7 @@ void setup() {
 
   Serial.begin(9600);
 
-  Serial.println(F("BOBino V1.6.1 ==[setup]===="));
+  Serial.println(F("BOBino V1.8.0 ==[setup]===="));
   //freeMem();
   countResets();
   delay(50);
@@ -167,7 +167,7 @@ void setup() {
     RTC_set();
 
 
-    Serial.print(F("BOBino V1.6.1 ==[loop]====  Go! Loop sleeps seconds: "));
+    Serial.print(F("BOBino V1.8.0 ==[loop]====  Go! Loop sleeps seconds: "));
     Serial.println(sleepSeconds);
   }
 }
@@ -270,6 +270,8 @@ void loop() {
     sprintf(oledBuffer, "Photo  %d", (int)photoRead);
     u8g2.drawStr(3, 48, oledBuffer );
 
+    sprintf(oledBuffer, "Time  %d", (long)lastReadMs);
+    u8g2.drawStr(3, 60, oledBuffer );
 
     u8g2.drawLine(0, 0, loopCount, 0 );
     //       u8g2.drawLine(0, 0, 100, 100);
