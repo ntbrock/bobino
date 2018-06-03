@@ -1,4 +1,4 @@
-
+#include <SPI.h>
 
 /***********************************************************
  * BOBino V1.6.1: Arduino Sensor Platform by Max Tucker, Taylor Brockman
@@ -74,7 +74,7 @@ void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 RTC_DS1307 RTC;
 
-char temp = 'F';
+
 short sleepSeconds = DEFAULT_SLEEP_SECONDS;
 
 #define ZERO F("0")
@@ -86,7 +86,7 @@ short sleepSeconds = DEFAULT_SLEEP_SECONDS;
 
 #define Fchar 'f'
 #define FCHAR 'F'
-
+char temp = FCHAR;
 
 #define DATA_FILENAME F("data.csv")
 #define RTC_FILENAME F("config/rtcset.txt")
@@ -254,16 +254,22 @@ void loop() {
   do {
     //u8g2.setFont(u8g2_font_5x7_tr);
 
-    u8g2.setFont(u8g2_font_10x20_tr);
+    u8g2.setFont(u8g2_font_7x13_tr);
+
+    //u8g2.setFont(u8g2_font_10x20_tr);
 
     sprintf(oledBuffer, "Temp1  %d", (int)tempA);
-    u8g2.drawStr(3, 16, oledBuffer );
+    u8g2.drawStr(3, 12, oledBuffer );
 
     sprintf(oledBuffer, "Temp2  %d", (int)tempB);
-    u8g2.drawStr(3, 34, oledBuffer );
+    u8g2.drawStr(3, 24, oledBuffer );
 
     sprintf(oledBuffer, "Temp3  %d", (int)tempC);
-    u8g2.drawStr(3, 56, oledBuffer );
+    u8g2.drawStr(3, 36, oledBuffer );
+
+    sprintf(oledBuffer, "Photo  %d", (int)photoRead);
+    u8g2.drawStr(3, 48, oledBuffer );
+
 
     u8g2.drawLine(0, 0, loopCount, 0 );
     //       u8g2.drawLine(0, 0, 100, 100);
