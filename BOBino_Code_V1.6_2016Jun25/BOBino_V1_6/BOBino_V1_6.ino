@@ -256,13 +256,13 @@ void loop() {
 
     u8g2.setFont(u8g2_font_10x20_tr);
 
-    sprintf(oledBuffer, "TempA: %d", (int)tempA);
+    sprintf(oledBuffer, "Temp1  %d", (int)tempA);
     u8g2.drawStr(3, 16, oledBuffer );
 
-    sprintf(oledBuffer, "TempB: %d", (int)tempB);
+    sprintf(oledBuffer, "Temp2  %d", (int)tempB);
     u8g2.drawStr(3, 34, oledBuffer );
 
-    sprintf(oledBuffer, "TempC: %d", (int)tempC);
+    sprintf(oledBuffer, "Temp3  %d", (int)tempC);
     u8g2.drawStr(3, 56, oledBuffer );
 
     u8g2.drawLine(0, 0, loopCount, 0 );
@@ -468,8 +468,8 @@ void configure() {
     }
   */
 
-  Serial.print(F("Info: Initializing Time. Contents of SLEEPSEC.TXT: "));
-
+  //Serial.print(F("Info: Initializing Time. Contents of SLEEPSEC.TXT: "));
+/*
   if ( SD.exists( TIME_FILENAME ) ) {
     File timetxt;
     String time;
@@ -500,7 +500,8 @@ void configure() {
     //   Serial.println();
 
   } else {
-    /*
+  */  
+  /*
      // Create the default value file on the new SD card.
     // Create the default value file on the new SD card.
     File fh=SD.open(TIME_FILENAME, FILE_WRITE);
@@ -517,7 +518,7 @@ void configure() {
       Serial.println(TIME_FILENAME);
     }
     */
-  }
+  /*} */
 
   /*
   if ( SD.exists( TEMP_FILENAME ) ) {
@@ -607,6 +608,8 @@ void configure() {
      Serial.println(unixTime);
     */
   //Serial.println(F("BOBino V1.6.1 - Configure complete"));
+  
+  
 }
 
 
