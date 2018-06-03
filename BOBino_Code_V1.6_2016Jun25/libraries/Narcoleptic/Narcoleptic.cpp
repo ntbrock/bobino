@@ -25,7 +25,9 @@
 #include <avr/sleep.h>
 #include "Narcoleptic.h"
 
+#if NARCOLEPTIC_CALIBRATION_ENABLE
 uint32_t watchdogTime_us = 16000;
+#endif
 uint32_t millisCounter = 0;
 
 SIGNAL(WDT_vect) {
@@ -47,8 +49,13 @@ void NarcolepticClass::sleep(uint8_t wdt_period,uint8_t sleep_mode) {
 #endif
 
   MCUSR = 0;
+#ifdef WDTCSR
   WDTCSR &= ~_BV(WDE);
   WDTCSR = _BV(WDIF) | _BV(WDIE) | _BV(WDCE);
+#else
+  WDTCR &= ~_BV(WDE);
+  WDTCR = _BV(WDIF) | _BV(WDIE) | _BV(WDCE);
+#endif
   
   wdt_enable(wdt_period);
   wdt_reset();
@@ -101,16 +108,16 @@ void NarcolepticClass::sleep(uint8_t wdt_period,uint8_t sleep_mode) {
 #ifdef ADCSRA
   uint8_t ADCSRAcopy = ADCSRA; ADCSRA &= ~_BV(ADIE);
 #endif
-#ifdef SPMCSR
+#if defined(SPMCSR) && defined(SPMIE)
   uint8_t SPMCSRcopy = SPMCSR; SPMCSR &= ~_BV(SPMIE);
 #endif
   
   sei();
-  sleep_mode();
-  wdt_disable();
+  sleep_mode();            // here the device is actually put to sleep!!
+  wdt_disable();           // first thing after waking from sleep: disable watchdog...
 
   // Reenable all interrupts
-#ifdef SPMCSR
+#if defined(SPMCSR) && defined(SPMIE)
   SPMCSR = SPMCSRcopy;
 #endif
 #ifdef ADCSRA
@@ -163,15 +170,18 @@ void NarcolepticClass::sleep(uint8_t wdt_period,uint8_t sleep_mode) {
 }
 
 
-void NarcolepticClass::delay(int milliseconds) {
+void NarcolepticClass::delay(uint32_t milliseconds) {
   millisCounter += milliseconds;
+#if NARCOLEPTIC_CALIBRATION_ENABLE
   uint32_t microseconds = milliseconds * 1000L;
   
   calibrate();
-  microseconds -= watchdogTime_us;
-  
-  if (microseconds > 0) {
-    uint16_t sleep_periods = microseconds / watchdogTime_us;
+ if (microseconds > watchdogTime_us) {
+    microseconds -= watchdogTime_us; 
+    uint32_t sleep_periods = microseconds / watchdogTime_us;
+#else
+    uint32_t sleep_periods = milliseconds / 16;
+#endif
     while (sleep_periods >= 512) {
       sleep(WDTO_8S,SLEEP_MODE_PWR_DOWN);
       sleep_periods -= 512;
@@ -185,9 +195,12 @@ void NarcolepticClass::delay(int milliseconds) {
     if (sleep_periods & 4) sleep(WDTO_60MS,SLEEP_MODE_PWR_DOWN);
     if (sleep_periods & 2) sleep(WDTO_30MS,SLEEP_MODE_PWR_DOWN);
     if (sleep_periods & 1) sleep(WDTO_15MS,SLEEP_MODE_PWR_DOWN);
+#if NARCOLEPTIC_CALIBRATION_ENABLE
   }
+#endif
 }
 
+#if NARCOLEPTIC_CALIBRATION_ENABLE
 void NarcolepticClass::calibrate() {
   // Calibration needs Timer 1. Ensure it is powered up.
   uint8_t PRRcopy = PRR;
@@ -210,7 +223,7 @@ void NarcolepticClass::calibrate() {
   TCNT1 = 0;
   TIMSK1 = 0;
   TIFR1 = 0;
-  // Set clock to /64 (should take 15625 cycles at 16MHz clock)
+  // Set clock to /64 (16ms should take approx. 4000 cycles at 16MHz clock)
   TCCR1B = _BV(CS11) | _BV(CS10);
   sleep(WDTO_15MS,SLEEP_MODE_IDLE);
   uint16_t watchdogDuration = TCNT1;
@@ -229,8 +242,9 @@ void NarcolepticClass::calibrate() {
   // Restore power reduction state
   PRR = PRRcopy;
   
-  watchdogTime_us = watchdogDuration * (64 * 1000000 / F_CPU);
+  watchdogTime_us = watchdogDuration * (64 * 1000000 / F_CPU); // should be approx. 16000
 }
+#endif
 
 uint32_t NarcolepticClass::millis() {
   return millisCounter;
@@ -238,10 +252,17 @@ uint32_t NarcolepticClass::millis() {
 
 
 void NarcolepticClass::disableWire() {
+#ifdef PRTWI
   PRR |= _BV(PRTWI);
+#endif
+#ifdef PRUSI
+  PRR |= _BV(PRUSI);
+#endif
 }
 void NarcolepticClass::disableTimer2() {
+#ifdef PRTIM2
   PRR |= _BV(PRTIM2);
+#endif
 }
 void NarcolepticClass::disableTimer1() {
   PRR |= _BV(PRTIM1);
@@ -250,20 +271,36 @@ void NarcolepticClass::disableMillis() {
   PRR |= _BV(PRTIM0);
 }
 void NarcolepticClass::disableSerial() {
+#ifdef PRUSART0
   PRR |= _BV(PRUSART0);
+#endif
+#ifdef PRUSART
+  PRR |= _BV(PRUSART);
+#endif
 }
 void NarcolepticClass::disableADC() {
+#ifdef PRADC
   PRR |= _BV(PRADC);
+#endif
 }
 void NarcolepticClass::disableSPI() {
+#ifdef PRSPI
   PRR |= _BV(PRSPI);
+#endif
 }
 
 void NarcolepticClass::enableWire() {
+#ifdef PRTWI
   PRR &= ~_BV(PRTWI);
+#endif
+#ifdef PRUSI
+  PRR &= ~_BV(PRUSI);
+#endif
 }
 void NarcolepticClass::enableTimer2() {
+#ifdef PRTIM2
   PRR &= ~_BV(PRTIM2);
+#endif
 }
 void NarcolepticClass::enableTimer1() {
   PRR &= ~_BV(PRTIM1);
@@ -272,13 +309,22 @@ void NarcolepticClass::enableMillis() {
   PRR &= ~_BV(PRTIM0);
 }
 void NarcolepticClass::enableSerial() {
+#ifdef PRUSART0
   PRR &= ~_BV(PRUSART0);
+#endif
+#ifdef PRUSART
+  PRR &= ~_BV(PRUSART);
+#endif
 }
 void NarcolepticClass::enableADC() {
+#ifdef PRADC
   PRR &= ~_BV(PRADC);
+#endif
 }
 void NarcolepticClass::enableSPI() {
+#ifdef PRSPI
   PRR &= ~_BV(PRSPI);
+#endif
 }
 
 NarcolepticClass Narcoleptic;
