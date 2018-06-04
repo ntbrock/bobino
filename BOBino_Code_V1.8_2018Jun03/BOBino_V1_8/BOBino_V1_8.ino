@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * Change Log:
- *  Brockman 2018-Jun-03: 1.8 - OLED Screen capabilities, removed Narcoleptic library 
+ *  Brockman 2018-Jun-03: 1.8 - OLED Screen capabilities, removed Narcoleptic library + photo qual
  *  Brockman 2017-Jul-23: 1.6.1 - Photo reading into int instead of byte to stabilize values
  *  Brockman 2016-Jul-17: 1.6 - Final Flash, Turned new date into Macro
  *  Brockman 2016-Jun-25: Code Revision, testing, and final OSH Park order for printed boards.
@@ -132,6 +132,8 @@ uint16_t freeMem() {
   }
 }
 
+char oledBuffer12[12] = "       ";
+
 void setup() {
 
   Serial.begin(9600);
@@ -157,10 +159,10 @@ void setup() {
   oled.print(now.year(), DEC);
   oled.print('/');
   oled.print(now.month(), DEC);
-//  oled.print('/');
-//  oled.print(now.day(), DEC);
-/*  
- oled.print(' ');
+  oled.print('/');
+  oled.print(now.day(), DEC);
+  
+  oled.println();
   if ( now.hour() < 10 ) { oled.print("0"); }
   oled.print(now.hour(), DEC);
   oled.print(':');
@@ -168,10 +170,10 @@ void setup() {
   oled.print(now.minute(), DEC );
   oled.print(':');
   if ( now.second() < 10 ) { oled.print("0"); }
-  oled.print(now.second(), DEC);
-*/
+  oled.println(now.second(), DEC);
 
-
+  sprintf(oledBuffer12, "%d Resets", (int)resetCount);
+  oled.println(oledBuffer12);
 
   //This is the chipselect pin, change based on SD shield documentation.
   if ( ! SD.begin(10) ) { 
@@ -261,8 +263,6 @@ void loop(){
     data.print(tempC, 2);
     data.print(CSV);
     data.print(photoRead, DEC);
-    data.print(CSV);
-    photoQual(photoRead,data);
     data.println();
     data.close();
 
@@ -304,7 +304,7 @@ void loop(){
   sprintf(oledBuffer, "Temp3  %d", (int)tempC);
   oled.println(oledBuffer);
  
-  sprintf(oledBuffer, "Photo  %d", (int)photoRead, resetCount);
+  sprintf(oledBuffer, "Photo  %d", (int)photoRead);
   oled.println(oledBuffer);
  
   sleep();
@@ -349,38 +349,12 @@ void createHeader(){ //This function creates a header at the top of the data.csv
     }
     data.print(CSV);
     data.print(F("Light (0-1023)"));
-    data.print(CSV);
-    data.print(F("Light (Descriptor)"));
     data.println();
     data.close();
   }
   else{
     // File handle is refereshed with every loop, not held in memory.
     // data=SD.open("data.csv", FILE_WRITE);
-  }
-}
-
-void photoQual(float reading, File data){ 
-  //below prints qualitative descriptors of light intensity
-  if(reading < 10){
-    data.print(F("Dark"));
-    //data.print(F("dark"));
-  }
-  else if(reading<100){
-    data.print(F("Dim"));
-    //Serial.print(F("dim"));
-  }
-  else if(reading<300){
-    data.print(F("Light"));
-    //Serial.print(F("light"));
-  }
-  else if(reading<600){
-    data.print(F("Bright"));
-    //Serial.print(F("bright"));
-  }
-  else{
-    data.print(F("Very Bright"));
-    //Serial.print(F("very bright"));
   }
 }
 
