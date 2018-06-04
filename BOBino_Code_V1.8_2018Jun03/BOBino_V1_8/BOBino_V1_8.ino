@@ -172,15 +172,17 @@ void setup() {
   if ( now.second() < 10 ) { oled.print("0"); }
   oled.println(now.second(), DEC);
 
-  sprintf(oledBuffer12, "%d Resets", (int)resetCount);
-  oled.println(oledBuffer12);
-
   //This is the chipselect pin, change based on SD shield documentation.
   if ( ! SD.begin(10) ) { 
+    oled.println(F("NO SD CARD"));
     Serial.println(F("FATAL: Unable to begin SD Card."));
     Serial.flush();
     deathFlash();
   } else {     
+
+    sprintf(oledBuffer12, "%d Resets", (int)resetCount);
+    oled.println(oledBuffer12);
+
 
     sensorsA.begin();
     sensorsB.begin();
