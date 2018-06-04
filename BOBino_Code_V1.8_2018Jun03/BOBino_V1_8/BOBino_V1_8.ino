@@ -46,9 +46,15 @@
 #include <EEPROM.h>
 
 // 1.8 Include display driver
-#include <U8g2lib.h>
+//#include <U8g2lib.h>
+#include <SSD1306Ascii.h>
+#include <SSD1306AsciiAvrI2c.h>
 
+#define I2C_ADDRESS 0x3C
+// Define proper RST_PIN if required.
+#define RST_PIN -1
 
+SSD1306AsciiAvrI2c oled;
 
 //http://www.instructables.com/id/two-ways-to-reset-arduino-in-software/step2/using-just-software/
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
@@ -131,6 +137,16 @@ void setup() {
   freeMem();
   countResets();
   delay(50);
+
+#if RST_PIN >= 0
+  oled.begin(&Adafruit128x64, I2C_ADDRESS, RST_PIN);
+#else // RST_PIN >= 0
+  oled.begin(&Adafruit128x64, I2C_ADDRESS);
+#endif // RST_PIN >= 0
+
+  oled.setFont(TimesNewRoman16);
+  oled.clear();
+  //oled.print(F("BOBino V1.8 Setup"));
 
 
   //This is the chipselect pin, change based on SD shield documentation.
@@ -251,7 +267,25 @@ void loop(){
     Serial.flush();
     deathFlash();
   }
+
+  // Write to OLED Screen
+  oled.clear();
+  char oledBuffer[12] = "       ";
+
+  sprintf(oledBuffer, "Temp1  %d", (int)tempA);
+  oled.println(oledBuffer);
   
+//    sprintf(oledBuffer, "Temp2  %d", (int)tempB);
+//  oled.println(oledBuffer);
+ 
+//    sprintf(oledBuffer, "Temp3  %d", (int)tempC);
+//  oled.println(oledBuffer);
+ 
+ /* sprintf(oledBuffer, "Photo  %d", (int)photoRead);
+  oled.print(oledBuffer);
+  oled.println();
+  */
+ 
   sleep();
 
 }
