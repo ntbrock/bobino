@@ -28,6 +28,9 @@
  *  Brockman 2014-Sep-02: Memory optimization http://forum.arduino.cc/index.php?topic=163307.0
  */
 
+
+// Flash Size must been < 30720 bytes, else you get the verification error in avrdude.
+
 #include <Wire.h>
 
 // 2015-Jun - Replaced the components with simple DS18B20 one-wire temperature sensors
@@ -144,9 +147,30 @@ void setup() {
   oled.begin(&Adafruit128x64, I2C_ADDRESS);
 #endif // RST_PIN >= 0
 
-  oled.setFont(TimesNewRoman16);
+  oled.setFont(X11fixed7x14); // TimesNewRoman16);
   oled.clear();
-  //oled.print(F("BOBino V1.8 Setup"));
+  oled.println(F("BOBino V1.8"));
+
+  //timestamp from rtc
+  DateTime now = RTC.now();
+
+  oled.print(now.year(), DEC);
+  oled.print('/');
+  oled.print(now.month(), DEC);
+//  oled.print('/');
+//  oled.print(now.day(), DEC);
+/*  
+ oled.print(' ');
+  if ( now.hour() < 10 ) { oled.print("0"); }
+  oled.print(now.hour(), DEC);
+  oled.print(':');
+  if ( now.minute() < 10 ) { oled.print("0"); }
+  oled.print(now.minute(), DEC );
+  oled.print(':');
+  if ( now.second() < 10 ) { oled.print("0"); }
+  oled.print(now.second(), DEC);
+*/
+
 
 
   //This is the chipselect pin, change based on SD shield documentation.
@@ -271,20 +295,17 @@ void loop(){
   // Write to OLED Screen
   oled.clear();
   char oledBuffer[12] = "       ";
-
-  sprintf(oledBuffer, "Temp1  %d", (int)tempA);
+  sprintf(oledBuffer, "Temp1  %d   %d", (int)tempA, loopCount);
   oled.println(oledBuffer);
-  
-//    sprintf(oledBuffer, "Temp2  %d", (int)tempB);
-//  oled.println(oledBuffer);
+
+  sprintf(oledBuffer, "Temp2  %d", (int)tempB);
+  oled.println(oledBuffer);
+
+  sprintf(oledBuffer, "Temp3  %d", (int)tempC);
+  oled.println(oledBuffer);
  
-//    sprintf(oledBuffer, "Temp3  %d", (int)tempC);
-//  oled.println(oledBuffer);
- 
- /* sprintf(oledBuffer, "Photo  %d", (int)photoRead);
-  oled.print(oledBuffer);
-  oled.println();
-  */
+  sprintf(oledBuffer, "Photo  %d", (int)photoRead, resetCount);
+  oled.println(oledBuffer);
  
   sleep();
 
