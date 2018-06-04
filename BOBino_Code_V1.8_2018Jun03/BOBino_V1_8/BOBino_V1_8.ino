@@ -16,7 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * 
  * Change Log:
- *  Brockman 2018-Jun-03: 1.8 - OLED Screen capabilities 
+ *  Brockman 2018-Jun-03: 1.8 - OLED Screen capabilities, removed Narcoleptic library 
  *  Brockman 2017-Jul-23: 1.6.1 - Photo reading into int instead of byte to stabilize values
  *  Brockman 2016-Jul-17: 1.6 - Final Flash, Turned new date into Macro
  *  Brockman 2016-Jun-25: Code Revision, testing, and final OSH Park order for printed boards.
@@ -40,16 +40,21 @@
 #include <avr/sleep.h>
 
 #include <RTClib.h> //Available from https://github.com/adafruit/RTClib
-#include <Narcoleptic.h> //microcontroller sleep library. Available at https://code.google.com/p/narcoleptic/downloads/detail?name=Narcoleptic_v1a.zip
+//#include <Narcoleptic.h> //microcontroller sleep library. Available at https://code.google.com/p/narcoleptic/downloads/detail?name=Narcoleptic_v1a.zip
 
 //http://www.arduino.cc/en/Tutorial/EEPROMWrite
 #include <EEPROM.h>
+
+// 1.8 Include display driver
+#include <U8g2lib.h>
+
+
 
 //http://www.instructables.com/id/two-ways-to-reset-arduino-in-software/step2/using-just-software/
 void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 
-#define RTCSET_DATE "2017 07 23 13 50 00;"
+#define RTCSET_DATE "2018 06 04 09 30 00;"
 
 #define DEFAULT_SLEEP_SECONDS 15
 
@@ -71,6 +76,9 @@ OneWire oneWireC(ONE_WIRE_BUS_C);
 DallasTemperature sensorsA(&oneWireA);
 DallasTemperature sensorsB(&oneWireB);
 DallasTemperature sensorsC(&oneWireC);
+
+//U8G2_SSD1306_128X64_NONAME_1_HW_I2C u8g2(U8G2_R0, U8X8_PIN_NONE); // All Boards without Reset of the Display
+
 
 char temp = 'F';
 char alt = 'F';
@@ -162,7 +170,7 @@ void loop(){
   loopCount += 1;
   freeMem();
 
-  lastReadMs = millis() + Narcoleptic.millis();
+  lastReadMs = millis();// + Narcoleptic.millis();
   DateTime now = RTC.now();
 
   // Acquire All readings
@@ -504,7 +512,7 @@ void configure(){
 }
 
 
-uint8_t narcolepticIsWorking = 1;
+uint8_t narcolepticIsWorking = 0;
 long narcolepticAlternateTime = 0;
 
 void sleep() { //Sleeps the arduino for the ammount of time specified by the config file, using the Narcoleptic sleep library.
@@ -516,7 +524,7 @@ void sleep() { //Sleeps the arduino for the ammount of time specified by the con
   long wakeMs = (float)lastReadMs + ( (float)sleepSeconds * 1000.0 ); // Version 1.6 - Changing timesleep to seconds
   long nextMs = -1;
   
-  long currentMs = millis() + Narcoleptic.millis();
+  long currentMs = millis();// + Narcoleptic.millis();
   while ( currentMs < wakeMs ){
 
     // Sleep 1 second less than expected
@@ -541,7 +549,7 @@ void sleep() { //Sleeps the arduino for the ammount of time specified by the con
       // CPU Narrow in the last second.
       delay(sleepMs);
     } else if ( narcolepticIsWorking ) { 
-      Narcoleptic.delay( sleepMs - 450 );
+      //Narcoleptic.delay( sleepMs - 450 );
       delay(200);
     } else { 
       // Narco is not working, use our alternate counter.
@@ -550,7 +558,7 @@ void sleep() { //Sleeps the arduino for the ammount of time specified by the con
 
 
     // Only set this at the end of the loop
-    nextMs = millis() + Narcoleptic.millis();  
+    nextMs = millis(); // + Narcoleptic.millis();  
 
 /*
     Serial.print(F("::: END current: " ));
